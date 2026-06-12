@@ -124,6 +124,8 @@ async def deck_ws(websocket: WebSocket) -> None:
 
             elif isinstance(msg, DeckGetMessage):
                 await send(DeckLayoutMessage(id=msg.id, payload=state.store.load_config()))
+                for update in state.watcher.snapshot():
+                    await send(update)
 
             elif isinstance(msg, DeckSaveMessage):
                 state.store.save_config(msg.payload)
@@ -136,11 +138,14 @@ async def deck_ws(websocket: WebSocket) -> None:
 
             elif isinstance(msg, ActionTriggerMessage):
                 button_id = msg.payload.button_id
-                button = state.store.load_config().find_button(button_id)
+                config = state.store.load_config()
+                button = config.find_button(button_id)
                 if button is None:
                     ok, detail = False, f"botão não encontrado: {button_id}"
                 else:
-                    ok, detail = await state.engine.run(button.action)
+                    ok, detail = await state.engine.run(
+                        button.action, allow_shell=config.allow_shell
+                    )
                     logger.info(
                         "'{}' acionou [{}] {} → {}",
                         device.name,
@@ -158,6 +163,8 @@ async def deck_ws(websocket: WebSocket) -> None:
                         ),
                     )
                 )
+                # toggles (ex.: mute) mudam o sistema logo após o Popen retornar
+                state.watcher.push_soon()
     except WebSocketDisconnect:
         if device is not None:
             logger.info("'{}' desconectado", device.name)

@@ -145,3 +145,11 @@ export function setActiveProfile(config: DeckConfig, profileId: string): DeckCon
   next.active_profile = profileId;
   return next;
 }
+
+// ---------------------------------------------------------------- configurações
+
+export function setAllowShell(config: DeckConfig, allow: boolean): DeckConfig {
+  const next = clone(config);
+  next.allow_shell = allow;
+  return next;
+}

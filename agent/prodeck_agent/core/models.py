@@ -41,8 +41,47 @@ class HotkeyAction(StrictModel):
     keys: list[str] = Field(min_length=1)
 
 
+class TextAction(StrictModel):
+    type: Literal["text"] = "text"
+    text: str = Field(min_length=1, max_length=5000)
+
+
+class ShellAction(StrictModel):
+    # roda no shell do sistema — só executa com allow_shell=true na config
+    type: Literal["shell"] = "shell"
+    command: str = Field(min_length=1)
+
+
+class DelayStep(StrictModel):
+    type: Literal["delay"] = "delay"
+    ms: int = Field(ge=0, le=30_000)
+
+
+MacroStep = Annotated[
+    OpenAppAction
+    | OpenPathAction
+    | OpenUrlAction
+    | HotkeyAction
+    | TextAction
+    | ShellAction
+    | DelayStep,
+    Field(discriminator="type"),
+]
+
+
+class MacroAction(StrictModel):
+    type: Literal["macro"] = "macro"
+    steps: list[MacroStep] = Field(min_length=1, max_length=50)
+
+
 Action = Annotated[
-    OpenAppAction | OpenPathAction | OpenUrlAction | HotkeyAction,
+    OpenAppAction
+    | OpenPathAction
+    | OpenUrlAction
+    | HotkeyAction
+    | TextAction
+    | ShellAction
+    | MacroAction,
     Field(discriminator="type"),
 ]
 
@@ -59,6 +98,9 @@ class Grid(StrictModel):
     rows: int = Field(default=4, ge=1, le=10)
 
 
+StateProvider = Literal["mic_muted", "audio_muted"]
+
+
 class Button(StrictModel):
     id: str
     position: Position
@@ -66,6 +108,7 @@ class Button(StrictModel):
     icon: str = "mdi:gesture-tap-button"
     color: str = "#3b82f6"
     action: Action
+    state: StateProvider | None = None
 
 
 class Page(StrictModel):
@@ -85,6 +128,7 @@ class DeckConfig(StrictModel):
     version: int = CONFIG_VERSION
     active_profile: str
     profiles: list[Profile] = []
+    allow_shell: bool = False
 
     @model_validator(mode="after")
     def _consistente(self) -> "DeckConfig":
@@ -230,6 +274,18 @@ class PongMessage(StrictModel):
     id: str
 
 
+class StateUpdatePayload(StrictModel):
+    button_id: str
+    active: bool
+
+
+class StateUpdateMessage(StrictModel):
+    v: int = PROTOCOL_VERSION
+    type: Literal["state.update"] = "state.update"
+    id: str
+    payload: StateUpdatePayload
+
+
 class ErrorPayload(StrictModel):
     message: str
 
@@ -246,6 +302,7 @@ ServerMessage = Annotated[
     | HelloDeniedMessage
     | DeckLayoutMessage
     | ActionResultMessage
+    | StateUpdateMessage
     | PongMessage
     | ErrorMessage,
     Field(discriminator="type"),

@@ -1,5 +1,7 @@
 """Montagem do FastAPI: rotas HTTP, WebSocket e os estáticos da PWA."""
 
+import asyncio
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import qrcode
@@ -13,6 +15,7 @@ from ..core.config import ConfigStore
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
 from ..core.pairing import Pairing
+from ..core.state import StateWatcher
 from .ws import ConnectionManager, deck_ws
 
 STATIC_DIR = Path(__file__).parent.parent / "static"
@@ -25,12 +28,19 @@ def pair_url(ip: str, port: int, token: str) -> str:
 def create_app(
     store: ConfigStore, engine: ActionEngine, pairing: Pairing, port: int
 ) -> FastAPI:
-    app = FastAPI(title="ProDeck Agent", version=__version__)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        poller = asyncio.create_task(app.state.watcher.run())
+        yield
+        poller.cancel()
+
+    app = FastAPI(title="ProDeck Agent", version=__version__, lifespan=lifespan)
     app.state.store = store
     app.state.engine = engine
     app.state.pairing = pairing
     app.state.version = __version__
     app.state.connections = ConnectionManager()
+    app.state.watcher = StateWatcher(store, app.state.connections)
 
     app.websocket("/ws")(deck_ws)
 

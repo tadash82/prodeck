@@ -6,6 +6,7 @@ import { useDeck, type EditTarget } from "../../store/useDeck";
 import type { Action, Button } from "../../types/protocol";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
+import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
 import { inputClass, labelClass, Sheet } from "./Sheet";
 
 type ActionType = Action["type"];
@@ -15,6 +16,9 @@ const ACTION_TABS: { type: ActionType; label: string; icon: string }[] = [
   { type: "open_path", label: "Pasta", icon: "mdi:folder-outline" },
   { type: "open_url", label: "URL", icon: "mdi:web" },
   { type: "hotkey", label: "Atalho", icon: "mdi:keyboard-outline" },
+  { type: "text", label: "Texto", icon: "mdi:form-textbox" },
+  { type: "shell", label: "Shell", icon: "mdi:console-line" },
+  { type: "macro", label: "Macro", icon: "mdi:playlist-play" },
 ];
 
 export function EditorSheet({ target }: { target: EditTarget }) {
@@ -34,6 +38,12 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   const [path, setPath] = useState(action?.type === "open_path" ? action.path : "");
   const [url, setUrl] = useState(action?.type === "open_url" ? action.url : "");
   const [keys, setKeys] = useState(action?.type === "hotkey" ? action.keys.join("+") : "");
+  const [text, setText] = useState(action?.type === "text" ? action.text : "");
+  const [shellCmd, setShellCmd] = useState(action?.type === "shell" ? action.command : "");
+  const [macroSteps, setMacroSteps] = useState<StepForm[]>(
+    action?.type === "macro" ? action.steps.map(stepToForm) : [],
+  );
+  const [stateSel, setStateSel] = useState<string>(existing?.state ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   function buildAction(): Action | null {
@@ -64,6 +74,19 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           ? { type: "hotkey", keys: parsed as [string, ...string[]] }
           : null;
       }
+      case "text": {
+        return text.trim() ? { type: "text", text } : null;
+      }
+      case "shell": {
+        const c = shellCmd.trim();
+        return c ? { type: "shell", command: c } : null;
+      }
+      case "macro": {
+        if (macroSteps.length === 0) return null;
+        const built = macroSteps.map(buildStep);
+        if (built.some((s) => s === null)) return null;
+        return { type: "macro", steps: built as MacroStep[] as [MacroStep, ...MacroStep[]] };
+      }
       default:
         return null;
     }
@@ -82,6 +105,7 @@ export function EditorSheet({ target }: { target: EditTarget }) {
       icon,
       color,
       action: builtAction,
+      state: stateSel === "" ? null : (stateSel as Button["state"]),
     };
     if (apply((c) => upsertButton(c, target.profileId, target.pageId, button))) {
       closeEditor();
@@ -202,6 +226,54 @@ export function EditorSheet({ target }: { target: EditTarget }) {
             </p>
           </div>
         )}
+        {actionType === "text" && (
+          <div>
+            <label className={labelClass}>Texto a digitar</label>
+            <textarea
+              className={`${inputClass} min-h-20`}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Será digitado onde o cursor estiver no PC"
+            />
+          </div>
+        )}
+        {actionType === "shell" && (
+          <div>
+            <label className={labelClass}>Comando de shell</label>
+            <textarea
+              className={`${inputClass} min-h-20 font-mono`}
+              value={shellCmd}
+              onChange={(e) => setShellCmd(e.target.value)}
+              placeholder="docker compose up -d"
+            />
+            <p className="mt-1 text-[11px] text-amber-400">
+              ⚠ Roda no shell do PC com seus privilégios. Exige “Permitir ações shell”
+              em Perfis e páginas.
+            </p>
+          </div>
+        )}
+        {actionType === "macro" && (
+          <div>
+            <label className={labelClass}>Passos da sequência</label>
+            <MacroBuilder steps={macroSteps} onChange={setMacroSteps} />
+          </div>
+        )}
+
+        <div>
+          <label className={labelClass}>Indicador de estado (opcional)</label>
+          <select
+            className={inputClass}
+            value={stateSel}
+            onChange={(e) => setStateSel(e.target.value)}
+          >
+            <option value="">Nenhum</option>
+            <option value="mic_muted">Microfone mutado</option>
+            <option value="audio_muted">Áudio mutado</option>
+          </select>
+          <p className="mt-1 text-[11px] text-slate-500">
+            O botão acende quando o estado estiver ativo no PC.
+          </p>
+        </div>
 
         <IconPicker value={icon} onChange={setIcon} />
         <ColorPicker value={color} onChange={setColor} />

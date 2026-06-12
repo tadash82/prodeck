@@ -38,7 +38,7 @@ def default_config() -> DeckConfig:
     """Perfil inicial com botões que funcionam nesta máquina."""
     buttons: list[Button] = []
 
-    def add(label: str, icon: str, color: str, action) -> None:
+    def add(label: str, icon: str, color: str, action, state=None) -> None:
         position = Position(col=len(buttons) % 3, row=len(buttons) // 3)
         buttons.append(
             Button(
@@ -48,6 +48,7 @@ def default_config() -> DeckConfig:
                 icon=icon,
                 color=color,
                 action=action,
+                state=state,
             )
         )
 
@@ -70,6 +71,20 @@ def default_config() -> DeckConfig:
     add("GitHub", "mdi:github", "#64748b", OpenUrlAction(url="https://github.com"))
     add("Terminal", "mdi:console", "#22c55e", HotkeyAction(keys=["ctrl", "alt", "t"]))
     add("Bloquear", "mdi:lock", "#ef4444", HotkeyAction(keys=["super", "l"]))
+    if shutil.which("wpctl"):
+        mute_cmd = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"]
+    elif shutil.which("pactl"):
+        mute_cmd = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"]
+    else:
+        mute_cmd = None
+    if mute_cmd:
+        add(
+            "Mute Mic",
+            "mdi:microphone-off",
+            "#ec4899",
+            OpenAppAction(command=mute_cmd),
+            state="mic_muted",
+        )
 
     return DeckConfig(
         version=CONFIG_VERSION,

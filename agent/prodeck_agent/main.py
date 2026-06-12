@@ -5,12 +5,13 @@ import argparse
 import qrcode
 import uvicorn
 
-from . import __version__
+from . import __version__, service
 from .core.config import ConfigStore
 from .core.engine import default_engine
 from .core.net import all_lan_ips, lan_ip
 from .core.pairing import Pairing
 from .server.app import create_app, pair_url
+from .tray import start_tray
 
 
 def _banner(store: ConfigStore, port: int) -> None:
@@ -35,7 +36,23 @@ def main() -> None:
         action="store_true",
         help="gera token novo e esquece os dispositivos pareados",
     )
+    parser.add_argument("--no-tray", action="store_true", help="não criar ícone na bandeja")
+    parser.add_argument(
+        "--install-service",
+        action="store_true",
+        help="instala e ativa o serviço systemd de usuário (autostart)",
+    )
+    parser.add_argument(
+        "--uninstall-service", action="store_true", help="remove o serviço systemd"
+    )
     args = parser.parse_args()
+
+    if args.install_service:
+        service.install(args.port)
+        return
+    if args.uninstall_service:
+        service.uninstall()
+        return
 
     store = ConfigStore()
     if args.reset_pairing:
@@ -44,6 +61,8 @@ def main() -> None:
 
     app = create_app(store, default_engine(), Pairing(store), args.port)
     _banner(store, args.port)
+    if not args.no_tray:
+        start_tray(args.port)
     uvicorn.run(app, host="0.0.0.0", port=args.port, log_level="info")
 
 

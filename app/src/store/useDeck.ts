@@ -24,6 +24,7 @@ type DeckState = {
   activePageIndex: number;
   rttMs: number | null;
   results: Record<string, ButtonResult>;
+  buttonStates: Record<string, boolean>;
   editMode: boolean;
   editTarget: EditTarget | null;
   manageOpen: boolean;
@@ -50,6 +51,7 @@ export const useDeck = create<DeckState>((set, get) => ({
   activePageIndex: 0,
   rttMs: null,
   results: {},
+  buttonStates: {},
   editMode: false,
   editTarget: null,
   manageOpen: false,
@@ -126,6 +128,14 @@ function handleMessage(message: ServerMessage): void {
             message: message.payload.message ?? "",
             at: Date.now(),
           },
+        },
+      });
+      break;
+    case "state.update":
+      setState({
+        buttonStates: {
+          ...getState().buttonStates,
+          [message.payload.button_id]: message.payload.active,
         },
       });
       break;
