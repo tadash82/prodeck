@@ -32,6 +32,18 @@ A análise completa das alternativas (Flutter, React Native, Kivy…) está em [
 | [03 — Arquitetura](docs/03-arquitetura.md) | Componentes, protocolo, modelo de dados, segurança |
 | [04 — Plano de desenvolvimento](docs/04-plano-de-desenvolvimento.md) | Fases, entregáveis, critérios de aceite, riscos |
 
+## Como rodar
+
+```bash
+cd agent && uv run prodeck-agent
+```
+
+No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie o QR da rede correta — o endereço já leva o token de pareamento. Depois use "Adicionar à tela inicial" para virar app fullscreen.
+
+- Botões: edite `~/.config/prodeck/profiles.json` (recarregue o app para ver as mudanças)
+- Token novo / esquecer dispositivos: `uv run prodeck-agent --reset-pairing`
+- Desenvolvimento da PWA: `cd app && npm run dev` (proxy para o agente na 8710); mudou modelo Pydantic → rode `scripts/gen-types.sh`; `npm run build` publica no agente
+
 ## Status
 
 - [x] Documentação e plano
