@@ -1,8 +1,10 @@
-"""Estado ao vivo dos botões (toggle): providers e watcher de mudanças.
+"""Watcher do agente: estado ao vivo dos botões e mudanças da config no disco.
 
-Um botão com `state` definido reflete um fato do sistema (ex.: mic mutado).
-O watcher avalia os providers em uso e faz broadcast de `state.update`
-quando algo muda — e imediatamente após cada ação disparada.
+Um botão com `state` definido reflete um fato do sistema (ex.: mic mutado);
+o watcher avalia os providers em uso e faz broadcast de `state.update` quando
+algo muda — e imediatamente após cada ação disparada. O mesmo loop observa o
+mtime do profiles.json: edições feitas à mão (VSCode etc.) são propagadas a
+todos os dispositivos como `deck.layout`.
 """
 
 import asyncio
@@ -12,7 +14,7 @@ from collections.abc import Callable
 
 from loguru import logger
 
-from .models import StateUpdateMessage, StateUpdatePayload
+from .models import DeckLayoutMessage, StateUpdateMessage, StateUpdatePayload
 
 
 def _muted(kind: str) -> bool:
@@ -55,14 +57,37 @@ def read_state(provider: str) -> bool:
 
 
 class StateWatcher:
-    POLL_SECONDS = 3.0
+    POLL_SECONDS = 2.0
 
     def __init__(self, store, connections) -> None:
         self.store = store
         self.connections = connections
         self._last: dict[str, bool] = {}
+        self._config_mtime = store.mtime()
         # refs fortes: create_task sem ref pode ser coletado no meio do sleep
         self._pending: set[asyncio.Task] = set()
+
+    # ------------------------------------------------- config no disco
+
+    def mark_config_synced(self) -> None:
+        """Chamado após um deck.save — aquela escrita não é 'edição à mão'."""
+        self._config_mtime = self.store.mtime()
+
+    async def check_config_file(self) -> None:
+        mtime = self.store.mtime()
+        if mtime == self._config_mtime:
+            return
+        self._config_mtime = mtime
+        try:
+            config = self.store.load_config()
+        except RuntimeError as exc:
+            logger.warning("profiles.json editado à mão está inválido: {}", exc)
+            return
+        self._config_mtime = self.store.mtime()
+        logger.info("profiles.json mudou no disco — propagando aos dispositivos")
+        await self.connections.broadcast(
+            DeckLayoutMessage(id="file-sync", payload=config)
+        )
 
     def push_soon(self, delay: float = 0.25) -> None:
         """Agenda um push fora do loop de mensagens (Popen ainda aplicando)."""
@@ -114,7 +139,8 @@ class StateWatcher:
     async def run(self) -> None:
         while True:
             try:
+                await self.check_config_file()
                 await self.push_changes()
             except Exception as exc:
-                logger.warning("watcher de estado: {}", exc)
+                logger.warning("watcher: {}", exc)
             await asyncio.sleep(self.POLL_SECONDS)

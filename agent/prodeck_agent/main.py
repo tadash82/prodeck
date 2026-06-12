@@ -25,7 +25,8 @@ def _banner(store: ConfigStore, port: int) -> None:
         marker = "→" if ip == primary else " "
         print(f"  {marker} {pair_url(ip, port, token)}")
     print(f"\n  QR de todas as interfaces: http://localhost:{port}/qr")
-    print(f"  config: {store.profiles_path}\n")
+    print(f"  deck neste PC (navegador): {pair_url('localhost', port, token)}")
+    print(f"  config: {store.profiles_path} (edições à mão sincronizam sozinhas)\n")
 
 
 def main() -> None:

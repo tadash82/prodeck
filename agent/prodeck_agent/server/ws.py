@@ -129,6 +129,7 @@ async def deck_ws(websocket: WebSocket) -> None:
 
             elif isinstance(msg, DeckSaveMessage):
                 state.store.save_config(msg.payload)
+                state.watcher.mark_config_synced()
                 logger.info("'{}' salvou a configuração do deck", device.name)
                 await send(DeckLayoutMessage(id=msg.id, payload=msg.payload))
                 await state.connections.broadcast(

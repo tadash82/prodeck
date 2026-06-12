@@ -138,6 +138,13 @@ class ConfigStore:
     def save_devices(self, devices: DevicesFile) -> None:
         self._write_json(self.devices_path, devices)
 
+    def mtime(self) -> int | None:
+        """mtime (ns) do profiles.json — None se ainda não existe."""
+        try:
+            return self.profiles_path.stat().st_mtime_ns
+        except FileNotFoundError:
+            return None
+
     # ---------------------------------------------------------- token
 
     def pair_token(self) -> str:
