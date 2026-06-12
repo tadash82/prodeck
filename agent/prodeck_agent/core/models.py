@@ -7,7 +7,7 @@ mudou um modelo, rode o script para manter as duas pontas sincronizadas.
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 PROTOCOL_VERSION = 1
 CONFIG_VERSION = 1
@@ -86,6 +86,24 @@ class DeckConfig(StrictModel):
     active_profile: str
     profiles: list[Profile] = []
 
+    @model_validator(mode="after")
+    def _consistente(self) -> "DeckConfig":
+        profile_ids = [p.id for p in self.profiles]
+        if len(set(profile_ids)) != len(profile_ids):
+            raise ValueError("há perfis com id duplicado")
+        if self.profiles and self.active_profile not in profile_ids:
+            raise ValueError(f"perfil ativo '{self.active_profile}' não existe")
+        for profile in self.profiles:
+            page_ids = [pg.id for pg in profile.pages]
+            if len(set(page_ids)) != len(page_ids):
+                raise ValueError(f"perfil '{profile.id}' tem páginas com id duplicado")
+        button_ids = [
+            b.id for p in self.profiles for pg in p.pages for b in pg.buttons
+        ]
+        if len(set(button_ids)) != len(button_ids):
+            raise ValueError("há botões com id duplicado")
+        return self
+
     def find_button(self, button_id: str) -> Button | None:
         for profile in self.profiles:
             for page in profile.pages:
@@ -146,8 +164,15 @@ class PingMessage(StrictModel):
     id: str
 
 
+class DeckSaveMessage(StrictModel):
+    v: int = PROTOCOL_VERSION
+    type: Literal["deck.save"] = "deck.save"
+    id: str
+    payload: "DeckConfig"
+
+
 ClientMessage = Annotated[
-    HelloMessage | DeckGetMessage | ActionTriggerMessage | PingMessage,
+    HelloMessage | DeckGetMessage | ActionTriggerMessage | PingMessage | DeckSaveMessage,
     Field(discriminator="type"),
 ]
 

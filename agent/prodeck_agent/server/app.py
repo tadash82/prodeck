@@ -13,7 +13,7 @@ from ..core.config import ConfigStore
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
 from ..core.pairing import Pairing
-from .ws import deck_ws
+from .ws import ConnectionManager, deck_ws
 
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
@@ -30,6 +30,7 @@ def create_app(
     app.state.engine = engine
     app.state.pairing = pairing
     app.state.version = __version__
+    app.state.connections = ConnectionManager()
 
     app.websocket("/ws")(deck_ws)
 

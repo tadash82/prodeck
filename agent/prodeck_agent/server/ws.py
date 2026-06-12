@@ -1,8 +1,8 @@
-"""Protocolo do deck sobre WebSocket: handshake por token e dispatch."""
+"""Protocolo do deck sobre WebSocket: handshake por token, dispatch e broadcast."""
 
 from fastapi import WebSocket, WebSocketDisconnect
 from loguru import logger
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from ..core.models import (
     CLIENT_MESSAGE,
@@ -11,6 +11,7 @@ from ..core.models import (
     ActionTriggerMessage,
     DeckGetMessage,
     DeckLayoutMessage,
+    DeckSaveMessage,
     Device,
     ErrorMessage,
     ErrorPayload,
@@ -26,13 +27,50 @@ from ..core.models import (
 AUTH_FAILED = 4401  # close code próprio: handshake recusado
 
 
+class ConnectionManager:
+    """Conexões autenticadas — alvo dos broadcasts de layout."""
+
+    def __init__(self) -> None:
+        self.active: set[WebSocket] = set()
+
+    def add(self, websocket: WebSocket) -> None:
+        self.active.add(websocket)
+
+    def remove(self, websocket: WebSocket) -> None:
+        self.active.discard(websocket)
+
+    async def broadcast(
+        self, message: BaseModel, exclude: WebSocket | None = None
+    ) -> None:
+        data = message.model_dump_json()
+        for connection in list(self.active):
+            if connection is exclude:
+                continue
+            try:
+                await connection.send_text(data)
+            except Exception:
+                self.remove(connection)
+
+
+def _friendly_validation_error(exc: ValidationError) -> str:
+    """Resume os primeiros erros num texto que dá para mostrar no app."""
+    parts = []
+    for error in exc.errors()[:3]:
+        loc = ".".join(str(piece) for piece in error["loc"])
+        parts.append(f"{loc}: {error['msg']}" if loc else error["msg"])
+    rest = exc.error_count() - len(parts)
+    if rest > 0:
+        parts.append(f"(+{rest} erros)")
+    return "; ".join(parts)
+
+
 async def deck_ws(websocket: WebSocket) -> None:
     await websocket.accept()
     state = websocket.app.state
     client_host = websocket.client.host if websocket.client else "?"
     device: Device | None = None
 
-    async def send(message) -> None:
+    async def send(message: BaseModel) -> None:
         await websocket.send_text(message.model_dump_json())
 
     try:
@@ -42,7 +80,7 @@ async def deck_ws(websocket: WebSocket) -> None:
                 msg = CLIENT_MESSAGE.validate_json(raw)
             except ValidationError as exc:
                 await send(
-                    ErrorMessage(payload=ErrorPayload(message=f"mensagem inválida: {exc.error_count()} erro(s)"))
+                    ErrorMessage(payload=ErrorPayload(message=_friendly_validation_error(exc)))
                 )
                 continue
 
@@ -59,6 +97,7 @@ async def deck_ws(websocket: WebSocket) -> None:
                 device = state.pairing.register(
                     msg.payload.device_id, msg.payload.device_name
                 )
+                state.connections.add(websocket)
                 logger.info("'{}' conectado ({})", device.name, client_host)
                 await send(
                     HelloOkMessage(
@@ -85,6 +124,15 @@ async def deck_ws(websocket: WebSocket) -> None:
 
             elif isinstance(msg, DeckGetMessage):
                 await send(DeckLayoutMessage(id=msg.id, payload=state.store.load_config()))
+
+            elif isinstance(msg, DeckSaveMessage):
+                state.store.save_config(msg.payload)
+                logger.info("'{}' salvou a configuração do deck", device.name)
+                await send(DeckLayoutMessage(id=msg.id, payload=msg.payload))
+                await state.connections.broadcast(
+                    DeckLayoutMessage(id="broadcast", payload=msg.payload),
+                    exclude=websocket,
+                )
 
             elif isinstance(msg, ActionTriggerMessage):
                 button_id = msg.payload.button_id
@@ -113,3 +161,5 @@ async def deck_ws(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         if device is not None:
             logger.info("'{}' desconectado", device.name)
+    finally:
+        state.connections.remove(websocket)
