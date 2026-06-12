@@ -35,20 +35,31 @@ A análise completa das alternativas (Flutter, React Native, Kivy…) está em [
 ## Como rodar
 
 ```bash
-cd agent && uv run prodeck-agent
+cd agent && uv run prodeck-agent          # primeiro plano (QR e URLs no terminal)
+uv run prodeck-agent --install-service    # ou: autostart via systemd de usuário
 ```
 
 No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie o QR da rede correta — o endereço já leva o token de pareamento. Depois use "Adicionar à tela inicial" para virar app fullscreen.
 
-- Botões: edite `~/.config/prodeck/profiles.json` (recarregue o app para ver as mudanças)
+**Três jeitos de configurar os botões** — todos sincronizam com todos os dispositivos na hora:
+
+1. **Pelo celular**: toque no lápis (ou segure um botão) — editor com ações, macros, 200k ícones e cores.
+2. **Pelo navegador do PC**: a mesma PWA roda no desktop (URL com token no banner do agente).
+3. **No editor de código**: salve `~/.config/prodeck/profiles.json` — o agente detecta e replica em até 2 s.
+
+Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado).
+
+Úteis:
+
 - Token novo / esquecer dispositivos: `uv run prodeck-agent --reset-pairing`
 - Desenvolvimento da PWA: `cd app && npm run dev` (proxy para o agente na 8710); mudou modelo Pydantic → rode `scripts/gen-types.sh`; `npm run build` publica no agente
+- Testes: `cd agent && uv run pytest` · `cd app && npm test`
 
 ## Status
 
 - [x] Documentação e plano
-- [x] Fase 0 — Prova de conceito (toque no celular abre o VSCode no PC) — concluída em 2026-06-11
-- [ ] Fase 1 — MVP utilizável no dia a dia
-- [ ] Fase 2 — Edição de botões pelo próprio app
-- [ ] Fase 3 — Macros, botões com estado, tray
-- [ ] Fase 4 — Polimento e distribuição (v1.0)
+- [x] Fase 0 — Prova de conceito (toque no celular abre o VSCode no PC) — 2026-06-11
+- [x] Fase 1 — MVP: 4 ações, pareamento por token, grid React — 2026-06-11
+- [x] Fase 2 — Editor de botões no celular, perfis/páginas, sincronização — 2026-06-11
+- [x] Fase 3 — Macros, shell/texto, botões com estado, autostart (+ sync de edições à mão) — 2026-06-11
+- [ ] Fase 4 — Polimento e distribuição (v1.0): temas, TLS opcional, binário, nome definitivo

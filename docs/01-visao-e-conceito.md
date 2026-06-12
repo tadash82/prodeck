@@ -49,11 +49,11 @@ Botões são organizados em **páginas** e **perfis** (ex.: perfil "Dev", perfil
 
 **Posicionamento:** open source, Linux-first, dev-friendly, mobile sem loja de aplicativos. Esse nicho está genuinamente vago.
 
-## Escopo do MVP (o que é e o que não é)
+## Escopo (atualizado em 2026-06-11, Fases 0–3 entregues)
 
-**É:** grid bonito no celular → executa ações no PC (abrir apps, pastas, URLs, atalhos de teclado), perfis/páginas configurados em JSON, pareamento por QR code.
+**Já é:** grid bonito no celular executando ações no PC (programas, pastas, URLs, atalhos, snippets de texto, shell opt-in e macros multi-step), editor visual no próprio app (ícones, cores, drag-and-drop), perfis e páginas, botões com estado real do sistema (ex.: mute do microfone), pareamento por QR code e sincronização em tempo real entre todos os dispositivos — inclusive de edições feitas à mão no JSON pelo PC.
 
-**Não é (ainda):** editor visual de botões (Fase 2), macros multi-step (Fase 3), integração com OBS/Home Assistant, multi-PC, loja de perfis (Fase 5 / backlog).
+**Ainda não é (Fase 4 / backlog):** produto instalável por terceiros sem fricção (binário/pipx documentado), TLS local, temas, integração com OBS/Home Assistant, multi-PC, sistema de plugins, loja de perfis.
 
 ## Nome
 

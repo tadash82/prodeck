@@ -48,8 +48,9 @@ Um deck é, na essência, **um grid de botões touch em tela cheia** — exatame
 | Animação | **Motion** (ex-Framer Motion) | Animação de press, transição entre páginas |
 | Ícones | **Iconify** (`@iconify/react`) | 200k+ ícones, busca embutida no futuro editor |
 | Estado | **Zustand** | Store simples (conexão, layout, perfil ativo) |
-| PWA | **vite-plugin-pwa** | Manifest + service worker (modo fullscreen, ícone) |
-| Drag & drop (Fase 2) | **dnd-kit** | Reordenar botões no editor |
+| PWA | manifest + meta tags (service worker fica p/ Fase 4, exige TLS) | Modo fullscreen, ícone na home |
+| Drag & drop | **dnd-kit** | Mover/trocar botões no modo edição |
+| Testes | **Vitest** | Operações puras da config (deckOps) |
 
 > Alternativa válida: **Svelte** no lugar de React (mais simples, menos boilerplate). React ganha aqui por volume de documentação e bibliotecas (dnd-kit, Iconify) — mas se você preferir Svelte ao experimentar, a troca no início custa pouco.
 
@@ -80,8 +81,9 @@ O agente é o componente que você vai mexer toda semana (novas ações, integra
 | Servidor | **FastAPI + Uvicorn** | HTTP (serve a PWA, pareamento) + **WebSocket** no mesmo processo |
 | Validação/Schema | **Pydantic v2** | Modelos do protocolo e da configuração; gera JSON Schema |
 | Abrir apps/pastas/URLs | `subprocess` + `xdg-open` (Linux), `start` (Win), `open` (mac) | Núcleo das ações — abstraído por SO |
-| Teclado/atalhos | **pynput** (X11/Win/mac) | Injeção de hotkeys. Ver nota Wayland abaixo |
-| Bandeja do sistema | **pystray** + Pillow | Ícone, status, "mostrar QR", sair |
+| Teclado/atalhos | **pynput** (X11/Win/mac) | Injeção de hotkeys e digitação de snippets. Ver nota Wayland abaixo |
+| Estado do sistema | **wpctl** (PipeWire) com fallback **pactl** | Providers de estado dos botões (mic/áudio mutado) — Ubuntu atual não traz pactl |
+| Bandeja do sistema | **pystray** + Pillow (best-effort) | Ícone, QR, sair — no GNOME depende da extensão AppIndicator; o caminho garantido é o serviço systemd |
 | QR code | **qrcode[pil]** | Pareamento (também em ASCII no terminal) |
 | Config | JSON em `~/.config/prodeck/` | Perfis, dispositivos pareados, com campo `version` |
 | Logs | **loguru** | Log de cada ação executada |

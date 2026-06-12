@@ -58,6 +58,12 @@ PWA:
 
 **Fora desta fase (resistir à tentação):** editor visual, macros, múltiplos perfis na UI, tray.
 
+> **✅ Concluída em 2026-06-11.** Conforme o plano, com um desvio consciente: a
+> "confirmação no PC" do primeiro pareamento virou **notificação não bloqueante**
+> (auto-aprovação com token) — ver ADR 7 no doc 03. Protocolo validado ao vivo:
+> token inválido recusado, layout entregue, 24 testes. Tipos TS gerados dos
+> modelos Pydantic desde o primeiro dia, como planejado.
+
 ---
 
 ## Fase 2 — Editor no app: novo botão sem tocar em JSON (2–3 semanas)
@@ -70,6 +76,13 @@ PWA:
 4. `deck.save` no protocolo: agente valida com Pydantic, persiste com escrita atômica e backup automático do JSON anterior, e propaga `deck.layout` para todos os dispositivos conectados.
 
 **Critério de aceite:** criar do zero, só pelo celular, um botão "abrir pasta X" funcional em < 1 minuto; config sobrevive a restart do agente; erro de validação aparece como mensagem amigável no app.
+
+> **✅ Concluída em 2026-06-11.** Tudo do escopo: long-press/lápis, células
+> vazias com "+", drag com troca de posições (dnd-kit), busca de ícones via API
+> do Iconify, perfis/páginas e broadcast de `deck.layout` para todos os
+> dispositivos (validado com dois clientes simultâneos). A validação Pydantic
+> volta como erro amigável e o app ressincroniza. `DeckConfig` ganhou validação
+> de ids duplicados.
 
 ---
 
@@ -85,6 +98,20 @@ PWA:
 6. Testes: pytest nos executores (subprocess mockado) e no fluxo de pareamento; vitest no cliente WS.
 
 **Critério de aceite:** botão "Modo Trabalho" abre VSCode + terminal + 2 URLs em sequência confiável; botão de mute reflete o estado real do mic; agente sobe sozinho com a sessão.
+
+> **✅ Concluída em 2026-06-11.** Desvios e aprendizados:
+> - **PipeWire**: o Ubuntu atual não traz `pactl` — providers de estado usam
+>   `wpctl` com fallback para pactl (descoberto em teste real).
+> - **Bandeja**: best-effort — no GNOME depende da extensão AppIndicator; o
+>   caminho garantido de presença é o serviço systemd (`--install-service`).
+> - **Resultado por passo** da macro simplificado: a falha aponta o passo
+>   ("passo 2 (open_url): …") em vez de stream de progresso.
+> - **Extra fora do plano**: edições à mão no `profiles.json` sincronizam com
+>   todos os dispositivos (watcher por mtime, 2 s) — pedido de uso real.
+> - **Testes do app**: vitest cobre as operações puras (deckOps); testes do
+>   cliente WS ficam para quando a lógica dele crescer.
+> - Validado ao vivo: macro com delay de 400 ms (404 ms medidos), gate do shell
+>   (off→bloqueado, on→executou), mute refletindo estado com push imediato.
 
 ---
 
