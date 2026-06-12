@@ -1,0 +1,20 @@
+[project]
+name = "prodeck-agent"
+version = "0.0.1"
+description = "ProDeck — agente que executa ações no PC a partir do deck no celular"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115",
+    "loguru>=0.7",
+    "qrcode>=8.0",
+]
+
+[project.scripts]
+prodeck-agent = "prodeck_agent.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["prodeck_agent"]

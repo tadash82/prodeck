@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Node (Fase 1)
+node_modules/
+dist/
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
