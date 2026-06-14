@@ -166,7 +166,7 @@ Envelope único nos dois sentidos:
 
 | Direção | `type` | Payload | Quando |
 |---|---|---|---|
-| C → S | `hello` | `{ token, device_name, app_version }` | Ao conectar |
+| C → S | `hello` | `{ token, device_id, device_name }` | Ao conectar |
 | S → C | `hello.ok` | `{ agent_version, active_profile }` | Handshake aceito |
 | S → C | `hello.denied` | `{ reason }` | Token inválido/revogado |
 | C → S | `deck.get` | `{}` | Pedir layout atual |
