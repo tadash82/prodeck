@@ -8,17 +8,19 @@ abrir o app (HTTPS).
 """
 
 import asyncio
+import secrets
 from contextlib import asynccontextmanager
 from importlib.resources import files
 from pathlib import Path
 
 import qrcode
 import qrcode.image.svg
-from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
+from ..core.apps import list_apps
 from ..core.config import ConfigStore
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
@@ -156,6 +158,15 @@ def create_app(
     _add_qr_route(app, store, http_port, https_port)
     if ca_path is not None:
         _add_ca_route(app, ca_path)
+
+    @app.get("/apps")
+    async def apps_list(token: str = "") -> JSONResponse:
+        """Apps instalados (.desktop) para o seletor do editor — autenticado."""
+        if not secrets.compare_digest(token, store.pair_token()):
+            raise HTTPException(status_code=401)
+        if not getattr(app.state, "apps_cache", None):
+            app.state.apps_cache = await asyncio.to_thread(list_apps)
+        return JSONResponse(app.state.apps_cache)
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")

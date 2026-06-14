@@ -13,6 +13,11 @@ export function captureToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+/** Token salvo deste aparelho (para chamadas HTTP autenticadas, ex.: /apps). */
+export function token(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export function deviceId(): string {
   let id = localStorage.getItem(DEVICE_KEY);
   if (!id) {

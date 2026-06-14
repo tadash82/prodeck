@@ -1,10 +1,12 @@
 import { Icon } from "@iconify/react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { newId, removeButton, upsertButton } from "../../lib/deckOps";
 import { useDeck, type EditTarget } from "../../store/useDeck";
 import type { Action, Button } from "../../types/protocol";
 import { ButtonIcon } from "../ButtonIcon";
+import { AppPicker, type InstalledApp } from "./AppPicker";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
 import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
@@ -28,14 +30,15 @@ export function EditorSheet({ target }: { target: EditTarget }) {
 
   const existing = target.kind === "edit" ? target.button : null;
   const action = existing?.action ?? null;
+  const initCommand = action?.type === "open_app" ? action.command : [];
 
   const [label, setLabel] = useState(existing?.label ?? "");
   const [icon, setIcon] = useState(existing?.icon ?? "mdi:gesture-tap-button");
   const [color, setColor] = useState(existing?.color ?? "#3b82f6");
   const [actionType, setActionType] = useState<ActionType>(action?.type ?? "open_app");
-  const [command, setCommand] = useState(
-    action?.type === "open_app" ? action.command.join("\n") : "",
-  );
+  const [program, setProgram] = useState(initCommand[0] ?? "");
+  const [args, setArgs] = useState(initCommand.slice(1).join("\n"));
+  const [appPickerOpen, setAppPickerOpen] = useState(false);
   const [path, setPath] = useState(action?.type === "open_path" ? action.path : "");
   const [url, setUrl] = useState(action?.type === "open_url" ? action.url : "");
   const [keys, setKeys] = useState(action?.type === "hotkey" ? action.keys.join("+") : "");
@@ -50,13 +53,13 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   function buildAction(): Action | null {
     switch (actionType) {
       case "open_app": {
-        const lines = command
+        const prog = program.trim();
+        if (!prog) return null;
+        const extra = args
           .split("\n")
           .map((s) => s.trim())
           .filter(Boolean);
-        return lines.length
-          ? { type: "open_app", command: lines as [string, ...string[]] }
-          : null;
+        return { type: "open_app", command: [prog, ...extra] as [string, ...string[]] };
       }
       case "open_path": {
         const p = path.trim();
@@ -96,6 +99,14 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   const builtAction = buildAction();
   const valid = label.trim().length > 0 && builtAction !== null;
 
+  const pickApp = (app: InstalledApp) => {
+    setProgram(app.exec[0] ?? "");
+    setArgs(app.exec.slice(1).join("\n"));
+    if (app.icon) setIcon(app.icon);
+    if (!label.trim()) setLabel(app.name);
+    setAppPickerOpen(false);
+  };
+
   const save = () => {
     if (!builtAction) return;
     const button: Button = {
@@ -129,13 +140,13 @@ export function EditorSheet({ target }: { target: EditTarget }) {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <div
-            className="flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-0.5 rounded-2xl text-white"
+            className="flex h-20 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl text-white"
             style={{
               background: `linear-gradient(160deg, ${color}, color-mix(in srgb, ${color} 55%, #000))`,
             }}
           >
-            <ButtonIcon icon={icon} size="1.6rem" />
-            <span className="max-w-14 truncate px-1 text-[8px] font-semibold">
+            <ButtonIcon icon={icon} size="2rem" />
+            <span className="max-w-16 truncate px-1 text-[9px] font-semibold">
               {label.trim() || "Botão"}
             </span>
           </div>
@@ -172,17 +183,33 @@ export function EditorSheet({ target }: { target: EditTarget }) {
         </div>
 
         {actionType === "open_app" && (
-          <div>
-            <label className={labelClass}>Comando — um argumento por linha</label>
-            <textarea
-              className={`${inputClass} min-h-20 font-mono`}
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              placeholder={"code-insiders\n/home/voce/Projetos/MeuApp"}
-            />
-            <p className="mt-1 text-[11px] text-slate-500">
-              1ª linha = programa; demais = argumentos. Sem shell, sem aspas.
-            </p>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setAppPickerOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-200 active:bg-slate-700"
+            >
+              <Icon icon="mdi:apps" style={{ fontSize: "1.2rem" }} />
+              Escolher app instalado
+            </button>
+            <div>
+              <label className={labelClass}>Programa</label>
+              <input
+                className={`${inputClass} font-mono`}
+                value={program}
+                onChange={(e) => setProgram(e.target.value)}
+                placeholder="code-insiders"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Argumentos — um por linha (opcional)</label>
+              <textarea
+                className={`${inputClass} min-h-16 font-mono`}
+                value={args}
+                onChange={(e) => setArgs(e.target.value)}
+                placeholder="/home/voce/Projetos/MeuApp"
+              />
+            </div>
           </div>
         )}
         {actionType === "open_path" && (
@@ -260,6 +287,9 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           </div>
         )}
 
+        <IconPicker value={icon} onChange={setIcon} />
+        <ColorPicker value={color} onChange={setColor} />
+
         <div>
           <label className={labelClass}>Indicador de estado (opcional)</label>
           <select
@@ -275,9 +305,6 @@ export function EditorSheet({ target }: { target: EditTarget }) {
             O botão acende quando o estado estiver ativo no PC.
           </p>
         </div>
-
-        <IconPicker value={icon} onChange={setIcon} />
-        <ColorPicker value={color} onChange={setColor} />
 
         <div className="mt-1 flex items-center gap-2">
           {existing && (
@@ -311,6 +338,11 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           </button>
         </div>
       </div>
+      {appPickerOpen &&
+        createPortal(
+          <AppPicker onPick={pickApp} onClose={() => setAppPickerOpen(false)} />,
+          document.body,
+        )}
     </Sheet>
   );
 }
