@@ -1,4 +1,10 @@
-"""Montagem do FastAPI: rotas HTTP, WebSocket e os estáticos da PWA."""
+"""Montagem do FastAPI: rotas HTTP, WebSocket e os estáticos da PWA.
+
+Com TLS há dois apps: o **app principal** (HTTPS, contexto seguro p/ a PWA e o
+WebSocket) e um **app de setup** leve (HTTP, sem avisos de certificado) que só
+serve a página de pareamento e o `rootCA.pem`. Assim o onboarding é todo por
+QR, sem digitar token nem topar avisos de "conexão não segura".
+"""
 
 import asyncio
 from contextlib import asynccontextmanager
@@ -8,7 +14,7 @@ from pathlib import Path
 import qrcode
 import qrcode.image.svg
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
@@ -28,14 +34,93 @@ def pair_url(ip: str, port: int, token: str, scheme: str = "http") -> str:
     return f"{scheme}://{ip}:{port}/?token={token}"
 
 
+def _qr_svg(url: str) -> str:
+    raw = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage).to_string()
+    return (raw.decode() if isinstance(raw, bytes) else raw).split("?>", 1)[-1]
+
+
+def _pairing_html(token: str, ips: list[str], http_port: int, https_port: int | None) -> str:
+    """Página de pareamento. Sem TLS: um QR por rede. Com TLS: por rede, o QR de
+    instalar o certificado (HTTP) e o de abrir o app (HTTPS)."""
+    if https_port is None:
+        blocks = "".join(
+            f"<figure>{_qr_svg(pair_url(ip, http_port, token))}"
+            f"<figcaption>http://{ip}:{http_port}</figcaption></figure>"
+            for ip in ips
+        )
+        body = (
+            "<h1>Parear dispositivo</h1>"
+            "<p>Escaneie com a câmera do celular o QR da rede em que ele está — "
+            "o endereço já leva o token, não precisa digitar nada.</p>"
+            f'<div class="cards">{blocks}</div>'
+        )
+    else:
+        nets = ""
+        for ip in ips:
+            cert_qr = _qr_svg(f"http://{ip}:{http_port}/rootCA.pem")
+            app_qr = _qr_svg(pair_url(ip, https_port, token, "https"))
+            nets += (
+                f'<div class="net"><div class="net-h">rede {ip}</div><div class="cards">'
+                f"<figure>{cert_qr}<figcaption>1 · instalar certificado</figcaption></figure>"
+                f"<figure>{app_qr}<figcaption>2 · abrir o ProDeck</figcaption></figure>"
+                "</div></div>"
+            )
+        body = (
+            "<h1>Instalar no celular — 2 passos (só na 1ª vez)</h1>"
+            "<p>Na rede em que o celular está: <b>1)</b> escaneie e instale o "
+            "certificado (Android: Configurações → Segurança → Instalar certificado "
+            "→ Certificado CA). <b>2)</b> escaneie para abrir o app e instalá-lo em "
+            "tela cheia. Sem digitar token nem avisos de “conexão não segura”.</p>"
+            f"{nets}"
+        )
+    return f"""<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProDeck · Parear dispositivo</title>
+<style>
+  body {{ background:#0b1220; color:#e2e8f0; font-family:system-ui,sans-serif;
+         display:flex; flex-direction:column; gap:1.5rem; align-items:center;
+         justify-content:center; min-height:100vh; margin:0; padding:2rem; }}
+  h1 {{ font-size:1.1rem; font-weight:600; margin:0; text-align:center; }}
+  p  {{ color:#94a3b8; font-size:.9rem; margin:0; text-align:center; max-width:32rem; }}
+  b  {{ color:#e2e8f0; }}
+  .net {{ display:flex; flex-direction:column; gap:.8rem; align-items:center; }}
+  .net-h {{ color:#64748b; font-family:ui-monospace,monospace; font-size:.8rem; }}
+  .cards {{ display:flex; flex-wrap:wrap; gap:2rem; justify-content:center; }}
+  figure {{ background:#fff; border-radius:16px; padding:18px; margin:0; text-align:center; }}
+  svg {{ width:220px; height:220px; display:block; }}
+  figcaption {{ color:#0f172a; font-family:ui-monospace,monospace; font-size:.85rem; margin-top:.6rem; }}
+</style></head>
+<body>{body}</body></html>"""
+
+
+def _add_qr_route(app: FastAPI, store: ConfigStore, http_port: int, https_port: int | None) -> None:
+    @app.get("/qr")
+    async def qr_page() -> HTMLResponse:
+        return HTMLResponse(
+            _pairing_html(store.pair_token(), all_lan_ips(), http_port, https_port)
+        )
+
+
+def _add_ca_route(app: FastAPI, ca_path: Path) -> None:
+    @app.get("/rootCA.pem")
+    async def root_ca() -> FileResponse:
+        """Certificado raiz para instalar no celular e confiar no agente."""
+        return FileResponse(
+            ca_path, media_type="application/x-pem-file", filename="ProDeck-rootCA.pem"
+        )
+
+
 def create_app(
     store: ConfigStore,
     engine: ActionEngine,
     pairing: Pairing,
-    port: int,
-    scheme: str = "http",
+    http_port: int,
+    https_port: int | None = None,
     ca_path: Path | None = None,
 ) -> FastAPI:
+    """App principal: PWA + WebSocket + estado. Roda em HTTPS quando há TLS."""
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         poller = asyncio.create_task(app.state.watcher.run())
@@ -51,52 +136,27 @@ def create_app(
     app.state.watcher = StateWatcher(store, app.state.connections)
 
     app.websocket("/ws")(deck_ws)
-
-    @app.get("/qr")
-    async def qr_page() -> HTMLResponse:
-        """Um QR por interface de rede — escaneie o da rede em que o celular está."""
-        token = store.pair_token()
-        cards = []
-        for ip in all_lan_ips():
-            url = pair_url(ip, port, token, scheme)
-            raw = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage).to_string()
-            svg = (raw.decode() if isinstance(raw, bytes) else raw).split("?>", 1)[-1]
-            cards.append(
-                f"<figure>{svg}<figcaption>{scheme}://{ip}:{port}</figcaption></figure>"
-            )
-        html = f"""<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ProDeck · Parear dispositivo</title>
-<style>
-  body {{ background:#0b1220; color:#e2e8f0; font-family:system-ui,sans-serif;
-         display:flex; flex-direction:column; gap:1.5rem; align-items:center;
-         justify-content:center; min-height:100vh; margin:0; padding:2rem; }}
-  h1 {{ font-size:1.1rem; font-weight:600; margin:0; }}
-  p  {{ color:#94a3b8; font-size:.9rem; margin:0; text-align:center; }}
-  .cards {{ display:flex; flex-wrap:wrap; gap:2rem; justify-content:center; }}
-  figure {{ background:#fff; border-radius:16px; padding:18px; margin:0; text-align:center; }}
-  svg {{ width:240px; height:240px; display:block; }}
-  figcaption {{ color:#0f172a; font-family:ui-monospace,monospace; font-size:.9rem; margin-top:.6rem; }}
-</style></head>
-<body>
-  <h1>Parear dispositivo</h1>
-  <p>Escaneie com a câmera do celular o QR da rede em que ele está.<br>
-     O endereço já leva o token de pareamento.</p>
-  <div class="cards">{''.join(cards)}</div>
-</body></html>"""
-        return HTMLResponse(html)
-
+    _add_qr_route(app, store, http_port, https_port)
     if ca_path is not None:
-
-        @app.get("/rootCA.pem")
-        async def root_ca() -> FileResponse:
-            """Certificado raiz para instalar no celular e confiar no agente."""
-            return FileResponse(
-                ca_path, media_type="application/x-pem-file", filename="ProDeck-rootCA.pem"
-            )
+        _add_ca_route(app, ca_path)
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")
+
+    return app
+
+
+def create_setup_app(
+    store: ConfigStore, http_port: int, https_port: int, ca_path: Path
+) -> FastAPI:
+    """App de setup (HTTP, sem TLS): página de pareamento e download do CA, para
+    o onboarding rodar sem avisos de certificado. Sem WebSocket nem watcher."""
+    app = FastAPI(title="ProDeck Setup", version=__version__)
+    _add_qr_route(app, store, http_port, https_port)
+    _add_ca_route(app, ca_path)
+
+    @app.get("/")
+    async def home() -> RedirectResponse:
+        return RedirectResponse("/qr")
 
     return app

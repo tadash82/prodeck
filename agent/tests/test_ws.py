@@ -45,7 +45,7 @@ def build_client(tmp_path, executed):
     )
     engine = ActionEngine()
     engine.register("open_url", executed.append)
-    app = create_app(store, engine, Pairing(store), port=8710)
+    app = create_app(store, engine, Pairing(store), http_port=8710)
     return TestClient(app), store
 
 

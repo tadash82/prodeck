@@ -63,20 +63,18 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 
 Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Por `http://<ip>:8710` (HTTP) ele trata como site comum e o atalho abre dentro do navegador (com a barra).
 
-Para o HTTPS, rode com **`--tls`** — o agente gera um certificado local (sem instalar nada no sistema, sem `sudo`):
+Rode com **`--tls`** — o agente gera um certificado local (sem instalar nada no sistema, sem `sudo`) e sobe um **assistente de pareamento**:
 
 ```bash
 prodeck-agent --tls
 ```
 
-No celular, **uma vez só**:
+Aí ele serve o **setup por HTTP** (porta 8710, sem avisos) e o **app por HTTPS** (porta 8711). No PC, abra **`http://localhost:8710/qr`** — aparecem, por rede, dois QRs. No celular, **uma vez só**:
 
-1. Abra `https://<ip>:8710` e aceite o aviso de certificado ("Avançado → prosseguir").
-2. Baixe e instale o certificado raiz em `https://<ip>:8710/rootCA.pem`
-   (Android: Configurações → Segurança → Instalar certificado → Certificado CA).
-3. Recarregue — surgem o cadeado e a opção **"Instalar app"** no menu ⋮.
+1. Escaneie **"instalar certificado"** → baixa o `rootCA.pem` → instale em Configurações → Segurança → Instalar certificado → Certificado CA.
+2. Escaneie **"abrir o ProDeck"** → o app abre já confiável (cadeado) → menu ⋮ → **"Instalar app"** → tela cheia.
 
-O certificado fica em `~/.config/prodeck/tls/` e cobre todos os IPs locais (regenera sozinho se a rede mudar). O HTTPS também deixa o "manter tela acesa" mais confiável (Wake Lock).
+Sem digitar token nem topar avisos de "conexão não segura". O certificado fica em `~/.config/prodeck/tls/`, cobre todos os IPs locais e regenera sozinho se a rede mudar.
 
 Úteis:
 
