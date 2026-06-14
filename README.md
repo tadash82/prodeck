@@ -35,7 +35,7 @@ Instalar o comando globalmente (a PWA vem embutida no pacote):
 
 ```bash
 uv tool install ./agent                   # do source (após publicar: uv tool install prodeck-agent)
-prodeck-agent                             # primeiro plano (QR e URLs no terminal)
+prodeck-agent                             # 1º plano: abre a página de pareamento no navegador (--no-open desliga)
 prodeck-agent --tls                       # HTTPS: instala a PWA em tela cheia (ver "Instalar como app")
 prodeck-agent --install-service           # autostart via systemd (acrescente --tls p/ HTTPS no boot)
 ```

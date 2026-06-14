@@ -2,7 +2,12 @@
 
 import argparse
 import asyncio
+import os
 import signal
+import socket
+import threading
+import time
+import webbrowser
 from pathlib import Path
 
 import qrcode
@@ -83,6 +88,29 @@ def _serve_with_tls(
     asyncio.run(serve())
 
 
+def _should_open_browser(no_open: bool) -> bool:
+    """Abre o navegador só no uso interativo: nunca sob systemd nem headless."""
+    if no_open or os.environ.get("INVOCATION_ID"):
+        return False
+    return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+
+
+def _open_when_ready(url: str, port: int) -> None:
+    """Espera o servidor responder na porta e abre o navegador (best-effort)."""
+
+    def wait_and_open() -> None:
+        deadline = time.monotonic() + 10.0
+        while time.monotonic() < deadline:
+            with socket.socket() as probe:
+                probe.settimeout(0.3)
+                if probe.connect_ex(("127.0.0.1", port)) == 0:
+                    webbrowser.open(url)
+                    return
+            time.sleep(0.2)
+
+    threading.Thread(target=wait_and_open, daemon=True).start()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="prodeck-agent")
     parser.add_argument("--port", type=int, default=8710)
@@ -96,6 +124,11 @@ def main() -> None:
         "--tls",
         action="store_true",
         help="serve via HTTPS com certificado local (necessário p/ instalar a PWA em tela cheia)",
+    )
+    parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="não abrir a página de pareamento no navegador ao iniciar",
     )
     parser.add_argument(
         "--install-service",
@@ -118,6 +151,9 @@ def main() -> None:
     if args.reset_pairing:
         store.reset_pairing()
         print("Pareamento resetado: token novo gerado, dispositivos esquecidos.")
+
+    if _should_open_browser(args.no_open):
+        _open_when_ready(f"http://localhost:{args.port}/qr", args.port)
 
     if args.tls:
         cert_path, key_path, ca_path = ensure_certs(store.root, all_lan_ips())

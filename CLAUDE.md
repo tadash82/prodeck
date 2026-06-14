@@ -8,7 +8,7 @@ ProDeck transforma o celular num "Stream Deck" touch que controla o PC pela LAN.
 
 ```bash
 # Rodar o agente (imprime QR + URLs de pareamento no terminal)
-cd agent && uv run prodeck-agent            # use --no-tray, --reset-pairing, --port N, --tls
+cd agent && uv run prodeck-agent            # use --no-tray, --reset-pairing, --port N, --tls, --no-open
 uv run prodeck-agent --install-service      # autostart via systemd de usuário
 
 # Testes
