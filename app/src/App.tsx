@@ -39,9 +39,9 @@ export default function App() {
   };
 
   return (
-    <div className="safe-area flex min-h-full flex-col">
+    <div className="safe-area flex h-dvh flex-col overflow-hidden">
       <StatusBar profileName={profile.name} />
-      <main className="flex flex-1 items-center justify-center p-4">
+      <main className="flex min-h-0 flex-1 items-center justify-center p-4">
         <DeckGrid page={page} profileId={profile.id} />
       </main>
       {(pages.length > 1 || editMode) && (
