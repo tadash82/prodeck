@@ -1,9 +1,10 @@
 """Montagem do FastAPI: rotas HTTP, WebSocket e os estáticos da PWA.
 
-Com TLS há dois apps: o **app principal** (HTTPS, contexto seguro p/ a PWA e o
-WebSocket) e um **app de setup** leve (HTTP, sem avisos de certificado) que só
-serve a página de pareamento e o `rootCA.pem`. Assim o onboarding é todo por
-QR, sem digitar token nem topar avisos de "conexão não segura".
+Com `--tls`, o mesmo app é servido por dois listeners no mesmo event loop (ver
+`main._serve_with_tls`): HTTP na porta (configurar pelo navegador do PC, sem
+avisos de certificado) e HTTPS na porta+1 (PWA em tela cheia no celular). A
+página `/qr` mostra, por rede, o QR de instalar o certificado (HTTP) e o de
+abrir o app (HTTPS).
 """
 
 import asyncio
@@ -14,7 +15,7 @@ from pathlib import Path
 import qrcode
 import qrcode.image.svg
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
@@ -119,13 +120,20 @@ def create_app(
     https_port: int | None = None,
     ca_path: Path | None = None,
 ) -> FastAPI:
-    """App principal: PWA + WebSocket + estado. Roda em HTTPS quando há TLS."""
+    """App principal: PWA + WebSocket + estado. Servido em HTTP (config pelo PC)
+    e/ou HTTPS (PWA em tela cheia no celular) — ver main._serve_with_tls."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        poller = asyncio.create_task(app.state.watcher.run())
+        # Com --tls o app é servido por dois listeners (HTTP + HTTPS) no mesmo
+        # event loop, então o lifespan roda duas vezes: o watcher sobe só uma.
+        if getattr(app.state, "poller", None) is None:
+            app.state.poller = asyncio.create_task(app.state.watcher.run())
         yield
-        poller.cancel()
+        poller = getattr(app.state, "poller", None)
+        if poller is not None:
+            poller.cancel()
+            app.state.poller = None
 
     app = FastAPI(title="ProDeck Agent", version=__version__, lifespan=lifespan)
     app.state.store = store
@@ -142,21 +150,5 @@ def create_app(
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")
-
-    return app
-
-
-def create_setup_app(
-    store: ConfigStore, http_port: int, https_port: int, ca_path: Path
-) -> FastAPI:
-    """App de setup (HTTP, sem TLS): página de pareamento e download do CA, para
-    o onboarding rodar sem avisos de certificado. Sem WebSocket nem watcher."""
-    app = FastAPI(title="ProDeck Setup", version=__version__)
-    _add_qr_route(app, store, http_port, https_port)
-    _add_ca_route(app, ca_path)
-
-    @app.get("/")
-    async def home() -> RedirectResponse:
-        return RedirectResponse("/qr")
 
     return app

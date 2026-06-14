@@ -69,12 +69,14 @@ Rode com **`--tls`** — o agente gera um certificado local (sem instalar nada n
 prodeck-agent --tls
 ```
 
-Aí ele serve o **setup por HTTP** (porta 8710, sem avisos) e o **app por HTTPS** (porta 8711). No PC, abra **`http://localhost:8710/qr`** — aparecem, por rede, dois QRs. No celular, **uma vez só**:
+Aí ele serve o deck em **HTTP** (porta 8710 — configurar pelo PC, sem avisos) e **HTTPS** (porta 8711 — PWA no celular). No PC, abra **`http://localhost:8710/qr`** — aparecem, por rede, dois QRs. No celular, **uma vez só**:
 
 1. Escaneie **"instalar certificado"** → baixa o `rootCA.pem` → instale em Configurações → Segurança → Instalar certificado → Certificado CA.
 2. Escaneie **"abrir o ProDeck"** → o app abre já confiável (cadeado) → menu ⋮ → **"Instalar app"** → tela cheia.
 
 Sem digitar token nem topar avisos de "conexão não segura". O certificado fica em `~/.config/prodeck/tls/`, cobre todos os IPs locais e regenera sozinho se a rede mudar.
+
+> **Configurar pelo PC:** abra **`http://localhost:8710`** no navegador do computador — o deck roda em HTTP no PC (sem avisos de certificado) e tudo que você muda sincroniza com o celular na hora.
 
 Úteis:
 
