@@ -8,7 +8,7 @@ ProDeck transforma o celular num "Stream Deck" touch que controla o PC pela LAN.
 
 ```bash
 # Rodar o agente (imprime QR + URLs de pareamento no terminal)
-cd agent && uv run prodeck-agent            # use --no-tray, --reset-pairing, --port N
+cd agent && uv run prodeck-agent            # use --no-tray, --reset-pairing, --port N, --tls
 uv run prodeck-agent --install-service      # autostart via systemd de usuário
 
 # Testes
@@ -40,6 +40,8 @@ O protocolo WebSocket e o modelo de configuração vivem **só** em `agent/prode
 **StateWatcher** (`core/state.py`): loop único de 2 s que faz duas coisas. (1) Botões com `state` (`mic_muted`/`audio_muted`) refletem fato real do PC — providers consultam `wpctl` (PipeWire) ou `pactl` (PulseAudio) e fazem broadcast de `state.update` quando muda, mais um push pós-trigger (`push_soon`). (2) **Sync de edições à mão**: compara o `mtime` do `profiles.json`; se mudou fora do app (editor de código), recarrega e propaga como `deck.layout` com `id: "file-sync"`. Após um `deck.save` o WS chama `mark_config_synced()` para que a própria escrita não seja vista como edição externa.
 
 **Pareamento** (`core/pairing.py`): token único no `secret.token`, comparado com `secrets.compare_digest`. Quem apresenta token válido entra em `devices.json` e dispara uma notificação desktop (`notify-send`, best-effort) — **não** há prompt bloqueante (ADR 7). Revogar tudo: `--reset-pairing` (token novo + esquece dispositivos).
+
+**TLS opcional** (`core/tls.py`): `--tls` serve HTTPS com um CA + certificado de servidor **gerados localmente via `cryptography`** (sem mkcert nem `sudo`), guardados em `~/.config/prodeck/tls/`. O certificado cobre todos os IPs locais (SAN, de `all_lan_ips()`) e regenera quando a rede muda; o CA é estável. É o que permite o Chrome instalar a PWA em tela cheia (contexto seguro) e o Wake Lock — o celular instala o `rootCA.pem` (servido em `/rootCA.pem`) uma vez. Com `--tls`, `pair_url`/`/qr` usam `https://` e o front deriva `wss://` de `location.protocol` sozinho.
 
 **Front** (`app/src/`): Zustand (`store/useDeck.ts`) guarda conexão, layout, edição e estados; `ws/client.ts` faz reconexão com backoff exponencial + RTT. Edições são **otimistas**: `apply()` muda o estado local e dispara `deck.save`; se o agente responder `error`, o front mostra toast e re-sincroniza com `deck.get`. Toda transformação de config é função **pura e imutável** em `lib/deckOps.ts` (testada isoladamente em `tests/deckOps.test.ts`) — regras de UX (ex.: "não excluir a última página") moram lá e viram `Error` com mensagem amigável. O token chega pela URL do QR (`?token=`), é salvo em `localStorage` e removido da barra de endereço (`lib/identity.ts`).
 

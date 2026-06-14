@@ -3,11 +3,12 @@
 import asyncio
 from contextlib import asynccontextmanager
 from importlib.resources import files
+from pathlib import Path
 
 import qrcode
 import qrcode.image.svg
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
@@ -23,12 +24,17 @@ from .ws import ConnectionManager, deck_ws
 STATIC_DIR = files("prodeck_agent") / "static"
 
 
-def pair_url(ip: str, port: int, token: str) -> str:
-    return f"http://{ip}:{port}/?token={token}"
+def pair_url(ip: str, port: int, token: str, scheme: str = "http") -> str:
+    return f"{scheme}://{ip}:{port}/?token={token}"
 
 
 def create_app(
-    store: ConfigStore, engine: ActionEngine, pairing: Pairing, port: int
+    store: ConfigStore,
+    engine: ActionEngine,
+    pairing: Pairing,
+    port: int,
+    scheme: str = "http",
+    ca_path: Path | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -52,11 +58,11 @@ def create_app(
         token = store.pair_token()
         cards = []
         for ip in all_lan_ips():
-            url = pair_url(ip, port, token)
+            url = pair_url(ip, port, token, scheme)
             raw = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage).to_string()
             svg = (raw.decode() if isinstance(raw, bytes) else raw).split("?>", 1)[-1]
             cards.append(
-                f"<figure>{svg}<figcaption>http://{ip}:{port}</figcaption></figure>"
+                f"<figure>{svg}<figcaption>{scheme}://{ip}:{port}</figcaption></figure>"
             )
         html = f"""<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
@@ -80,6 +86,15 @@ def create_app(
   <div class="cards">{''.join(cards)}</div>
 </body></html>"""
         return HTMLResponse(html)
+
+    if ca_path is not None:
+
+        @app.get("/rootCA.pem")
+        async def root_ca() -> FileResponse:
+            """Certificado raiz para instalar no celular e confiar no agente."""
+            return FileResponse(
+                ca_path, media_type="application/x-pem-file", filename="ProDeck-rootCA.pem"
+            )
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")

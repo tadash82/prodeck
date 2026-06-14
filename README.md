@@ -36,6 +36,7 @@ Instalar o comando globalmente (a PWA vem embutida no pacote):
 ```bash
 uv tool install ./agent                   # instala o comando `prodeck-agent` no PATH
 prodeck-agent                             # primeiro plano (QR e URLs no terminal)
+prodeck-agent --tls                       # HTTPS: instala a PWA em tela cheia (ver "Instalar como app")
 prodeck-agent --install-service           # ou: autostart via systemd de usuário
 ```
 
@@ -60,7 +61,22 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 
 ### Instalar como app (tela cheia)
 
-Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Acessando por `http://<ip-da-lan>:8710` (HTTP), o navegador trata como site comum: o menu mostra "Adicionar à tela inicial", mas o atalho abre dentro do navegador (com a barra). A instalação em tela cheia de verdade chega com o **TLS opcional** (mkcert), em desenvolvimento na Fase 4.
+Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Por `http://<ip>:8710` (HTTP) ele trata como site comum e o atalho abre dentro do navegador (com a barra).
+
+Para o HTTPS, rode com **`--tls`** — o agente gera um certificado local (sem instalar nada no sistema, sem `sudo`):
+
+```bash
+prodeck-agent --tls
+```
+
+No celular, **uma vez só**:
+
+1. Abra `https://<ip>:8710` e aceite o aviso de certificado ("Avançado → prosseguir").
+2. Baixe e instale o certificado raiz em `https://<ip>:8710/rootCA.pem`
+   (Android: Configurações → Segurança → Instalar certificado → Certificado CA).
+3. Recarregue — surgem o cadeado e a opção **"Instalar app"** no menu ⋮.
+
+O certificado fica em `~/.config/prodeck/tls/` e cobre todos os IPs locais (regenera sozinho se a rede mudar). O HTTPS também deixa o "manter tela acesa" mais confiável (Wake Lock).
 
 Úteis:
 
@@ -107,5 +123,5 @@ Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chro
 - [ ] Fase 4 — Polimento e distribuição (v1.0):
   - [x] Nome definitivo (ProDeck), LICENSE MIT e guia de solução de problemas
   - [x] Temas (claro/escuro/auto), cor de destaque e grade (colunas × linhas) configurável
-  - [ ] TLS opcional (mkcert) → Wake Lock nativo + instalação PWA em tela cheia
-  - [ ] Binário único (PyInstaller) e suporte a Windows
+  - [x] TLS opcional (`--tls`, certificado local) → instalação da PWA em tela cheia
+  - [ ] Wake Lock nativo, binário único (PyInstaller) e suporte a Windows

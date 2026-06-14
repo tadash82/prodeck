@@ -5,6 +5,7 @@ description = "ProDeck — agente que executa ações no PC a partir do deck no 
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
+    "cryptography>=43",
     "fastapi[standard]>=0.115",
     "loguru>=0.7",
     "pillow>=12.2.0",
