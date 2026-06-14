@@ -62,6 +62,32 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 - Desenvolvimento da PWA: `cd app && npm run dev` (proxy para o agente na 8710); mudou modelo Pydantic → rode `scripts/gen-types.sh`; `npm run build` publica no agente
 - Testes: `cd agent && uv run pytest` · `cd app && npm test`
 
+## Solução de problemas
+
+**O celular não acha o agente / o QR não conecta**
+- Confirme que celular e PC estão na **mesma rede**. Cuidado com redes dual-WAN/mesh: se o Wi-Fi do celular sai por outro modem (load balancer, pfSense), ele pode estar do *lado WAN* e sem rota até o PC. Teste conectando os dois ao mesmo Wi-Fi, ou configure port forward / reserva no roteador.
+- O endereço `/qr` mostra **um QR por interface de rede** — escaneie o da rede que o celular realmente usa.
+- **Firewall**: libere a porta do agente. No Ubuntu: `sudo ufw allow 8710/tcp`.
+- **AP isolation** (isolamento de clientes) no roteador bloqueia dispositivos entre si — desative-o para a rede usada.
+
+**Conectava e parou depois de reiniciar o PC**
+- Se o IP do PC mudou (DHCP), o atalho salvo no celular aponta para o endereço antigo. Faça **reserva de DHCP / IP fixo** para o PC. A PWA mostra "agente não encontrado" — basta reabrir `/qr` e reescanear.
+
+**Atalhos de teclado (`hotkey`/`text`) não funcionam**
+- O agente injeta teclas via `pynput` em **X11**. Em sessão **Wayland** isso é restrito pelo compositor — use uma sessão Xorg (as demais ações continuam funcionando). Suporte a Wayland via ydotool/portal está no backlog.
+
+**O botão de mute não reflete o estado real do mic/áudio**
+- O estado vem de `wpctl` (PipeWire) com fallback para `pactl` (PulseAudio). Garanta que um dos dois esteja instalado e no PATH.
+
+**O ícone da bandeja não aparece (GNOME)**
+- A bandeja é best-effort; no GNOME depende da extensão **AppIndicator**. O caminho garantido de "estar sempre rodando" é o serviço: `prodeck-agent --install-service`.
+
+**A tela do celular apaga durante o uso**
+- A PWA usa NoSleep.js para manter a tela acesa (alguns navegadores exigem uma interação antes). Wake Lock nativo, mais confiável, chega junto com o TLS opcional.
+
+**`code` (ou outro programa) não abre ao tocar o botão**
+- O comando precisa existir no PATH do agente. Algumas máquinas têm `code-insiders` em vez de `code` — ajuste a ação do botão para o binário correto.
+
 ## Status
 
 - [x] Documentação e plano

@@ -3,6 +3,7 @@ name = "prodeck-agent"
 version = "0.1.0"
 description = "ProDeck — agente que executa ações no PC a partir do deck no celular"
 requires-python = ">=3.12"
+license = "MIT"
 dependencies = [
     "fastapi[standard]>=0.115",
     "loguru>=0.7",
