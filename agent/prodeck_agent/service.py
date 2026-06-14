@@ -11,7 +11,7 @@ Description=ProDeck Agent — deck de produtividade no celular
 After=graphical-session.target
 
 [Service]
-ExecStart={python} -m prodeck_agent --no-tray --port {port}
+ExecStart={python} -m prodeck_agent --no-tray{tls} --port {port}
 Restart=on-failure
 RestartSec=3
 
@@ -20,12 +20,16 @@ WantedBy=default.target
 """
 
 
-def install(port: int) -> None:
+def install(port: int, tls: bool = False) -> None:
     UNIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    UNIT_PATH.write_text(UNIT_TEMPLATE.format(python=sys.executable, port=port))
+    UNIT_PATH.write_text(
+        UNIT_TEMPLATE.format(python=sys.executable, port=port, tls=" --tls" if tls else "")
+    )
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
     subprocess.run(["systemctl", "--user", "enable", "--now", "prodeck.service"], check=True)
     print(f"Serviço instalado e iniciado ({UNIT_PATH}).")
+    if tls:
+        print(f"TLS ligado: setup em http://localhost:{port}/qr, app em HTTPS na {port + 1}.")
     print("Acompanhe com: journalctl --user -u prodeck -f")
     print("Obs.: para o atalho de teclado (hotkey) funcionar, a sessão gráfica")
     print("precisa expor DISPLAY ao systemd — padrão no Ubuntu/GNOME em X11.")

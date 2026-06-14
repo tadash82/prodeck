@@ -86,7 +86,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.install_service:
-        service.install(args.port)
+        service.install(args.port, args.tls)
         return
     if args.uninstall_service:
         service.uninstall()

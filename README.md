@@ -37,7 +37,7 @@ Instalar o comando globalmente (a PWA vem embutida no pacote):
 uv tool install ./agent                   # instala o comando `prodeck-agent` no PATH
 prodeck-agent                             # primeiro plano (QR e URLs no terminal)
 prodeck-agent --tls                       # HTTPS: instala a PWA em tela cheia (ver "Instalar como app")
-prodeck-agent --install-service           # ou: autostart via systemd de usuário
+prodeck-agent --install-service           # autostart via systemd (acrescente --tls p/ HTTPS no boot)
 ```
 
 Na primeira instalação o `uv` pode pedir `uv tool update-shell` (uma vez) para
