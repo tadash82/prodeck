@@ -34,7 +34,7 @@ A análise completa das alternativas (Flutter, React Native, Kivy…) está em [
 Instalar o comando globalmente (a PWA vem embutida no pacote):
 
 ```bash
-uv tool install ./agent                   # instala o comando `prodeck-agent` no PATH
+uv tool install ./agent                   # do source (após publicar: uv tool install prodeck-agent)
 prodeck-agent                             # primeiro plano (QR e URLs no terminal)
 prodeck-agent --tls                       # HTTPS: instala a PWA em tela cheia (ver "Instalar como app")
 prodeck-agent --install-service           # autostart via systemd (acrescente --tls p/ HTTPS no boot)
@@ -81,6 +81,7 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - Token novo / esquecer dispositivos: `uv run prodeck-agent --reset-pairing`
 - Desenvolvimento da PWA: `cd app && npm run dev` (proxy para o agente na 8710); mudou modelo Pydantic → rode `scripts/gen-types.sh`; `npm run build` publica no agente
 - Testes: `cd agent && uv run pytest` · `cd app && npm test`
+- **Publicar no PyPI** (mantenedor): `cd app && npm run build` (se mexeu no front) → `cd agent && uv build && uv publish` (precisa de token PyPI). A PWA já vai embutida no wheel.
 
 ## Solução de problemas
 
@@ -122,4 +123,5 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
   - [x] Nome definitivo (ProDeck), LICENSE MIT e guia de solução de problemas
   - [x] Temas (claro/escuro/auto), cor de destaque e grade (colunas × linhas) configurável
   - [x] TLS opcional (`--tls`, certificado local) → instalação da PWA em tela cheia
+  - [x] Distribuição: pacote pronto pro PyPI (`uv tool install prodeck-agent`), PWA embutida — falta só `uv publish`
   - [ ] Wake Lock nativo, binário único (PyInstaller) e suporte a Windows
