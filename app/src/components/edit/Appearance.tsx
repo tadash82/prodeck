@@ -11,8 +11,8 @@ const THEMES: { value: ThemeMode; label: string; icon: string }[] = [
 
 const SIZES: { value: GridSize; label: string }[] = [
   { value: "compact", label: "Compacto" },
-  { value: "comfortable", label: "Confortável" },
-  { value: "large", label: "Grande" },
+  { value: "comfortable", label: "Médio" },
+  { value: "large", label: "Espaçoso" },
 ];
 
 const subLabel = "mb-1.5 block text-xs font-medium text-slate-400";
@@ -61,7 +61,7 @@ export function Appearance() {
       </div>
 
       <div>
-        <span className={subLabel}>Tamanho dos botões</span>
+        <span className={subLabel}>Espaçamento entre botões</span>
         <div className="grid grid-cols-3 gap-1.5">
           {SIZES.map((s) => (
             <Segment key={s.value} active={size === s.value} onClick={() => setSize(s.value)}>

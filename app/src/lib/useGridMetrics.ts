@@ -3,19 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import type { GridSize } from "../store/usePrefs";
 
 /**
- * Calcula o tamanho de cada célula para o grid **caber por inteiro** no espaço
- * disponível, tanto em retrato quanto em paisagem/tablet: a célula é o menor
- * lado possível entre o limite de largura e o de altura. Isso resolve de uma só
- * vez "modo paisagem/tablet" (nunca estoura a tela) e "ajuste de tamanho"
- * (o preset escolhido define o teto e o espaçamento).
+ * Dimensiona as células para o grid **preencher** o espaço disponível: a célula
+ * é a maior que cabe na dimensão mais apertada (largura ÷ colunas vs altura ÷
+ * linhas), então tudo aparece sem rolagem em retrato e paisagem e os botões
+ * ocupam a tela em vez de ficarem espremidos no centro. O tamanho dos botões
+ * passa a vir das colunas × linhas da página (configuráveis); o preset abaixo
+ * só ajusta o espaçamento entre eles.
  */
 
-const SIZING: Record<GridSize, { gap: number; max: number }> = {
-  compact: { gap: 8, max: 88 },
-  comfortable: { gap: 12, max: 116 },
-  large: { gap: 16, max: 152 },
-};
-const MIN_CELL = 52;
+const GAP: Record<GridSize, number> = { compact: 6, comfortable: 12, large: 20 };
+const MIN_CELL = 40;
+const MAX_CELL = 260; // evita botões gigantes em telas muito grandes (tablet)
 
 export function useGridMetrics(cols: number, rows: number, size: GridSize) {
   const ref = useRef<HTMLDivElement>(null);
@@ -31,10 +29,10 @@ export function useGridMetrics(cols: number, rows: number, size: GridSize) {
     return () => ro.disconnect();
   }, []);
 
-  const { gap, max } = SIZING[size];
-  const fitWidth = box.w ? (box.w - (cols - 1) * gap) / cols : max;
-  const fitHeight = box.h ? (box.h - (rows - 1) * gap) / rows : max;
-  const cell = Math.max(MIN_CELL, Math.min(max, Math.floor(Math.min(fitWidth, fitHeight))));
+  const gap = GAP[size];
+  const fitW = box.w ? (box.w - (cols - 1) * gap) / cols : MAX_CELL;
+  const fitH = box.h ? (box.h - (rows - 1) * gap) / rows : MAX_CELL;
+  const cell = Math.max(MIN_CELL, Math.min(MAX_CELL, Math.floor(Math.min(fitW, fitH))));
   const width = cell * cols + gap * (cols - 1);
 
   return { ref, cell, gap, width };

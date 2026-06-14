@@ -153,3 +153,44 @@ export function setAllowShell(config: DeckConfig, allow: boolean): DeckConfig {
   next.allow_shell = allow;
   return next;
 }
+
+// ---------------------------------------------------------------- grade
+
+/** Limites de colunas/linhas — espelham os Field(ge/le) do modelo Pydantic. */
+export const GRID_LIMITS = {
+  cols: { min: 1, max: 8 },
+  rows: { min: 1, max: 10 },
+} as const;
+
+const clampTo = (v: number, { min, max }: { min: number; max: number }) =>
+  Math.max(min, Math.min(max, Math.round(v)));
+
+/** Ajusta colunas/linhas da página (com clamp aos limites do modelo). */
+export function setGrid(
+  config: DeckConfig,
+  profileId: string,
+  pageId: string,
+  patch: { cols?: number; rows?: number },
+): DeckConfig {
+  const next = clone(config);
+  const page = pageAt(next, profileId, pageId);
+  const cols = patch.cols ?? page.grid?.cols ?? 3;
+  const rows = patch.rows ?? page.grid?.rows ?? 4;
+  page.grid = { cols: clampTo(cols, GRID_LIMITS.cols), rows: clampTo(rows, GRID_LIMITS.rows) };
+  return next;
+}
+
+/** Reposiciona os botões em ordem de leitura, preenchendo o grid sem buracos. */
+export function repackButtons(config: DeckConfig, profileId: string, pageId: string): DeckConfig {
+  const next = clone(config);
+  const page = pageAt(next, profileId, pageId);
+  const cols = page.grid?.cols ?? 3;
+  const ordered = [...(page.buttons ?? [])].sort(
+    (a, b) => a.position.row - b.position.row || a.position.col - b.position.col,
+  );
+  ordered.forEach((button, i) => {
+    button.position = { col: i % cols, row: Math.floor(i / cols) };
+  });
+  page.buttons = ordered;
+  return next;
+}

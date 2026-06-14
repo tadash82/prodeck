@@ -4,12 +4,15 @@ import { useState } from "react";
 import {
   addPage,
   addProfile,
+  GRID_LIMITS,
   removePage,
   removeProfile,
   renamePage,
   renameProfile,
+  repackButtons,
   setActiveProfile,
   setAllowShell,
+  setGrid,
 } from "../../lib/deckOps";
 import { useDeck } from "../../store/useDeck";
 import { Appearance } from "./Appearance";
@@ -22,6 +25,7 @@ export function ManageSheet() {
   const apply = useDeck((s) => s.apply);
   const setManageOpen = useDeck((s) => s.setManageOpen);
   const setPage = useDeck((s) => s.setPage);
+  const activePageIndex = useDeck((s) => s.activePageIndex);
 
   const [renaming, setRenaming] = useState<Renaming | null>(null);
   const [armedDelete, setArmedDelete] = useState<string | null>(null);
@@ -29,6 +33,8 @@ export function ManageSheet() {
   if (!config) return null;
   const profiles = config.profiles ?? [];
   const active = profiles.find((p) => p.id === config.active_profile) ?? profiles[0];
+  const pages = active?.pages ?? [];
+  const activePage = pages[Math.min(activePageIndex, Math.max(pages.length - 1, 0))];
 
   const confirmRename = () => {
     if (!renaming) return;
@@ -169,6 +175,41 @@ export function ManageSheet() {
           />
         </section>
 
+        {activePage && (
+          <section className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Grade — “{activePage.name}”
+            </h3>
+            <Stepper
+              label="Colunas"
+              value={activePage.grid?.cols ?? 3}
+              min={GRID_LIMITS.cols.min}
+              max={GRID_LIMITS.cols.max}
+              onChange={(v) => apply((c) => setGrid(c, active.id, activePage.id, { cols: v }))}
+            />
+            <Stepper
+              label="Linhas"
+              value={activePage.grid?.rows ?? 4}
+              min={GRID_LIMITS.rows.min}
+              max={GRID_LIMITS.rows.max}
+              onChange={(v) => apply((c) => setGrid(c, active.id, activePage.id, { rows: v }))}
+            />
+            <button
+              type="button"
+              onClick={() => apply((c) => repackButtons(c, active.id, activePage.id))}
+              className="flex items-center justify-center gap-2 rounded-xl bg-slate-800/70 px-3 py-2 text-sm text-slate-200 active:bg-slate-700"
+            >
+              <Icon icon="mdi:view-grid-plus-outline" style={{ fontSize: "1.1rem" }} />
+              Reorganizar botões
+            </button>
+            <p className="text-[11px] leading-relaxed text-slate-500">
+              Vale para esta página. Os botões preenchem a tela — menos colunas/linhas deixa cada
+              botão maior. Para o celular deitado, mais colunas aproveitam a largura; toque em
+              “Reorganizar” para distribuir os botões sem buracos.
+            </p>
+          </section>
+        )}
+
         <Appearance />
 
         <section className="flex flex-col gap-2">
@@ -223,6 +264,43 @@ function AddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (name: str
       >
         <Icon icon="mdi:plus" style={{ fontSize: "1.1rem" }} />
       </button>
+    </div>
+  );
+}
+
+function Stepper({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const step = (delta: number) => {
+    const next = value + delta;
+    if (next >= min && next <= max) onChange(next);
+  };
+  const btn =
+    "flex h-7 w-7 items-center justify-center rounded-lg bg-slate-700 text-slate-200 disabled:opacity-40 active:bg-slate-600";
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-slate-800/70 px-3 py-2">
+      <span className="text-sm text-slate-200">{label}</span>
+      <div className="flex items-center gap-3">
+        <button type="button" aria-label={`Menos ${label}`} disabled={value <= min} onClick={() => step(-1)} className={btn}>
+          <Icon icon="mdi:minus" style={{ fontSize: "1rem" }} />
+        </button>
+        <span className="w-5 text-center text-sm font-semibold text-slate-100 tabular-nums">
+          {value}
+        </span>
+        <button type="button" aria-label={`Mais ${label}`} disabled={value >= max} onClick={() => step(1)} className={btn}>
+          <Icon icon="mdi:plus" style={{ fontSize: "1rem" }} />
+        </button>
+      </div>
     </div>
   );
 }
