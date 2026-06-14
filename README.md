@@ -52,7 +52,7 @@ No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie 
 **Três jeitos de configurar os botões** — todos sincronizam com todos os dispositivos na hora:
 
 1. **Pelo celular**: toque no lápis (ou segure um botão) — editor com ações, macros, 200k ícones e cores.
-2. **Pelo navegador do PC**: a mesma PWA roda no desktop (URL com token no banner do agente).
+2. **Pelo navegador do PC**: abra `http://localhost:8710/qr` e clique em **"Abrir o deck aqui"** — a mesma PWA roda no desktop, sem precisar copiar token.
 3. **No editor de código**: salve `~/.config/prodeck/profiles.json` — o agente detecta e replica em até 2 s.
 
 Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado).
@@ -76,7 +76,7 @@ Aí ele serve o deck em **HTTP** (porta 8710 — configurar pelo PC, sem avisos)
 
 Sem digitar token nem topar avisos de "conexão não segura". O certificado fica em `~/.config/prodeck/tls/`, cobre todos os IPs locais e regenera sozinho se a rede mudar.
 
-> **Configurar pelo PC:** abra **`http://localhost:8710`** no navegador do computador — o deck roda em HTTP no PC (sem avisos de certificado) e tudo que você muda sincroniza com o celular na hora.
+> **Configurar pelo PC:** abra **`http://localhost:8710/qr`** e clique em **"Abrir o deck aqui"** (não precisa copiar token). O deck roda em HTTP no PC, sem avisos, e tudo que você muda sincroniza com o celular na hora.
 
 Úteis:
 

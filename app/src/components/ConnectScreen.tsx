@@ -11,11 +11,11 @@ const CONTENT: Record<string, { title: string; body: string }> = {
   },
   denied: {
     title: "Acesso negado",
-    body: "O token deste aparelho não vale mais. No PC, abra http://localhost:8710/qr e escaneie o QR novamente.",
+    body: "O token deste aparelho não vale mais. Abra a página de pareamento e pareie de novo.",
   },
   "no-token": {
     title: "Pareie com o seu PC",
-    body: "No PC, abra http://localhost:8710/qr e escaneie o QR da rede em que o celular está — o endereço já leva o token.",
+    body: "Escaneie o QR com o celular, ou — neste computador — abra a página de pareamento e clique em “Abrir o deck aqui”.",
   },
 };
 
@@ -31,6 +31,14 @@ export function ConnectScreen({ status }: { status: DeckStatus }) {
       )}
       <h1 className="text-lg font-semibold text-slate-100">{title}</h1>
       <p className="max-w-xs text-sm leading-relaxed text-slate-400">{body}</p>
+      {(status === "no-token" || status === "denied") && (
+        <a
+          href="/qr"
+          className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white active:bg-blue-700"
+        >
+          Abrir página de pareamento
+        </a>
+      )}
       <p className="font-mono text-xs text-slate-600">{location.host}</p>
     </div>
   );

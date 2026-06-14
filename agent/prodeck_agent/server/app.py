@@ -91,8 +91,17 @@ def _pairing_html(token: str, ips: list[str], http_port: int, https_port: int | 
   figure {{ background:#fff; border-radius:16px; padding:18px; margin:0; text-align:center; }}
   svg {{ width:220px; height:220px; display:block; }}
   figcaption {{ color:#0f172a; font-family:ui-monospace,monospace; font-size:.85rem; margin-top:.6rem; }}
+  .pc-row {{ display:flex; flex-direction:column; gap:.7rem; align-items:center;
+            border-top:1px solid #1e293b; padding-top:1.5rem; width:100%; max-width:32rem; }}
+  .pc-row span {{ color:#94a3b8; font-size:.9rem; text-align:center; }}
+  .pc {{ display:inline-block; padding:.75rem 1.4rem; border-radius:12px; background:#2563eb;
+        color:#fff; text-decoration:none; font-size:.95rem; font-weight:600; }}
+  .pc:active {{ background:#1d4ed8; }}
 </style></head>
-<body>{body}</body></html>"""
+<body>{body}
+<div class="pc-row"><span>Vai configurar pelo próprio computador?</span>
+<a class="pc" href="/?token={token}">Abrir o deck aqui</a></div>
+</body></html>"""
 
 
 def _add_qr_route(app: FastAPI, store: ConfigStore, http_port: int, https_port: int | None) -> None:
