@@ -16,7 +16,7 @@ Um app no celular exibe um **grid de botões configuráveis**. Cada toque envia 
 
 | Categoria | Exemplos de botão |
 |---|---|
-| Projetos | "VSCode · StreamDeck" → `code ~/Projetos/StreamDeck` |
+| Projetos | "VSCode · ProDeck" → `code ~/Projetos/ProDeck` |
 | Pastas | "Downloads" → abre `~/Downloads` no gerenciador de arquivos |
 | Macros | "Modo Trabalho" → abre VSCode + terminal + 3 abas do navegador, em sequência |
 | Scripts | "git pull em tudo", "docker compose up", "backup agora" |
@@ -57,4 +57,4 @@ Botões são organizados em **páginas** e **perfis** (ex.: perfil "Dev", perfil
 
 ## Nome
 
-A pasta do projeto se chama `StreamDeck`, mas **"Stream Deck" é marca da Elgato** — antes de publicar qualquer coisa, adotar um nome próprio. Nos documentos usamos **ProDeck** como codinome provisório.
+O projeto se chama **ProDeck**. O nome "Stream Deck" é **marca registrada da Elgato** e foi deliberadamente evitado — a pasta e o repositório, que originalmente usavam `StreamDeck`, foram renomeados para `ProDeck`.

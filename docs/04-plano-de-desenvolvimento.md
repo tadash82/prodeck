@@ -19,7 +19,7 @@ funciona"       a dia"            sem editar       toggles, tray"    bonito, doc
 **Objetivo:** provar que tocar no celular executa algo no PC com latência imperceptível. Sem beleza, sem arquitetura final.
 
 Tarefas:
-1. `uv init` no `agent/` — FastAPI com um endpoint WS e **uma** ação hard-coded (`code ~/Projetos/StreamDeck`).
+1. `uv init` no `agent/` — FastAPI com um endpoint WS e **uma** ação hard-coded (`code ~/Projetos/ProDeck`).
 2. Uma página HTML crua (nem React ainda) com um botão gigante, servida pelo próprio FastAPI, conectando no WS.
 3. Abrir no celular pelo IP, tocar, ver o VSCode abrir no PC.
 4. Medir/observar: latência percebida, firewall do Ubuntu (ufw), celular e PC na mesma rede.
@@ -167,7 +167,7 @@ Em ordem aproximada de valor:
 ## Primeiros comandos (quando sair da doc para o código — Fase 0)
 
 ```bash
-cd ~/Projetos/StreamDeck
+cd ~/Projetos/ProDeck
 git init
 
 # Agente

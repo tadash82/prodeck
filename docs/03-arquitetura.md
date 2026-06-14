@@ -41,7 +41,7 @@ Decisão estrutural: **o agente serve a própria PWA**. Um único processo no PC
 ## Estrutura do repositório (monorepo)
 
 ```
-StreamDeck/
+ProDeck/
 ├── agent/                          # Python (uv)
 │   ├── pyproject.toml
 │   ├── tests/                      # pytest (modelos, config, engine, WS, file-sync)
@@ -103,10 +103,10 @@ StreamDeck/
             {
               "id": "b1",
               "position": [0, 0],
-              "label": "StreamDeck",
+              "label": "ProDeck",
               "icon": "mdi:microsoft-visual-studio-code",
               "color": "#2dd4bf",
-              "action": { "type": "open_app", "command": ["code", "/home/tadashi/Projetos/StreamDeck"] }
+              "action": { "type": "open_app", "command": ["code", "/home/tadashi/Projetos/ProDeck"] }
             },
             {
               "id": "b2",
@@ -133,7 +133,7 @@ StreamDeck/
               "action": {
                 "type": "macro",
                 "steps": [
-                  { "type": "open_app", "command": ["code", "~/Projetos/StreamDeck"] },
+                  { "type": "open_app", "command": ["code", "~/Projetos/ProDeck"] },
                   { "type": "delay", "ms": 800 },
                   { "type": "open_url", "url": "https://github.com" },
                   { "type": "open_app", "command": ["gnome-terminal"] }

@@ -1,8 +1,5 @@
 # ProDeck — Deck de Produtividade no Celular
 
-> Nome provisório. "Stream Deck" é marca registrada da Elgato — renomear antes de publicar.
-> Outras ideias: TaskDeck, DeckPad, LaunchDeck, Comando.
-
 Transforme o celular (ou um tablet velho) em um painel de botões touch que controla o seu PC pela rede Wi-Fi: abrir o VSCode em um projeto, abrir pastas, disparar macros, rodar scripts, controlar mídia — com foco em **produtividade de desenvolvedor**, não em streaming.
 
 ```
