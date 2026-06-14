@@ -104,7 +104,7 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - A bandeja é best-effort; no GNOME depende da extensão **AppIndicator**. O caminho garantido de "estar sempre rodando" é o serviço: `prodeck-agent --install-service`.
 
 **A tela do celular apaga durante o uso**
-- A PWA usa NoSleep.js para manter a tela acesa (alguns navegadores exigem uma interação antes). Wake Lock nativo, mais confiável, chega junto com o TLS opcional.
+- Em HTTPS (`--tls`) a PWA usa a **Screen Wake Lock API** nativa, mais confiável. Em HTTP cai no NoSleep.js (alguns navegadores exigem uma interação antes de ativar).
 
 **`code` (ou outro programa) não abre ao tocar o botão**
 - O comando precisa existir no PATH do agente. Algumas máquinas têm `code-insiders` em vez de `code` — ajuste a ação do botão para o binário correto.
@@ -124,4 +124,5 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
   - [x] Temas (claro/escuro/auto), cor de destaque e grade (colunas × linhas) configurável
   - [x] TLS opcional (`--tls`, certificado local) → instalação da PWA em tela cheia
   - [x] Distribuição: pacote pronto pro PyPI (`uv tool install prodeck-agent`), PWA embutida — falta só `uv publish`
-  - [ ] Wake Lock nativo, binário único (PyInstaller) e suporte a Windows
+  - [x] Wake Lock nativo (Screen Wake Lock API em HTTPS; NoSleep.js de fallback)
+  - [ ] Binário único (PyInstaller) e suporte a Windows — sob demanda
