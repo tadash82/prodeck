@@ -31,7 +31,7 @@ export function ColorPicker({
             onClick={() => onChange(color)}
             aria-label={color}
             className={`h-9 w-9 rounded-full transition-transform ${
-              color === value ? "scale-110 ring-2 ring-white" : "active:scale-95"
+              color === value ? "scale-110 ring-2 ring-slate-100" : "active:scale-95"
             }`}
             style={{ background: color }}
           />

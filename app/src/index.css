@@ -1,5 +1,66 @@
 @import "tailwindcss";
 
+/*
+  Tokens de cor por tema. O dark é o padrão (preserva o visual mesmo sem JS) e o
+  light inverte a rampa de neutros. A cor de destaque (--accent) é única para os
+  dois temas e o usuário troca em Aparência (ManageSheet).
+
+  Os utilitários slate-* (neutros) e blue-* (destaque) do Tailwind são
+  remapeados para estes tokens via `@theme inline`, então todo o app reage ao
+  tema sem nenhuma classe condicional espalhada pelos componentes.
+*/
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --bg-glow: #142036;
+  --s-100: #f1f5f9;
+  --s-200: #e2e8f0;
+  --s-300: #cbd5e1;
+  --s-400: #94a3b8;
+  --s-500: #64748b;
+  --s-600: #475569;
+  --s-700: #334155;
+  --s-800: #1e293b;
+  --s-900: #0f172a;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef2f7;
+  --bg-glow: #ffffff;
+  --s-100: #0f172a;
+  --s-200: #1e293b;
+  --s-300: #334155;
+  --s-400: #475569;
+  --s-500: #64748b;
+  --s-600: #94a3b8;
+  --s-700: #e2e8f0;
+  --s-800: #eef2f6;
+  --s-900: #ffffff;
+}
+
+:root {
+  --accent: #3b82f6;
+  --accent-soft: color-mix(in srgb, var(--accent) 72%, white);
+  --accent-strong: color-mix(in srgb, var(--accent) 82%, black);
+}
+
+@theme inline {
+  --color-slate-100: var(--s-100);
+  --color-slate-200: var(--s-200);
+  --color-slate-300: var(--s-300);
+  --color-slate-400: var(--s-400);
+  --color-slate-500: var(--s-500);
+  --color-slate-600: var(--s-600);
+  --color-slate-700: var(--s-700);
+  --color-slate-800: var(--s-800);
+  --color-slate-900: var(--s-900);
+  --color-blue-400: var(--accent-soft);
+  --color-blue-500: var(--accent);
+  --color-blue-600: var(--accent-strong);
+}
+
 html,
 body,
 #root {
@@ -7,7 +68,8 @@ body,
 }
 
 body {
-  background: #0b1220 radial-gradient(80% 60% at 50% 0%, #142036 0%, #0b1220 70%);
+  background: var(--bg) radial-gradient(80% 60% at 50% 0%, var(--bg-glow) 0%, var(--bg) 70%);
+  color: var(--s-300);
   overscroll-behavior: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

@@ -13,6 +13,25 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>ProDeck</title>
+    <script>
+      // Aplica tema e cor de destaque antes do primeiro paint (evita flash).
+      // Espelha o padrão de usePrefs.ts (chave "prodeck:prefs", default dark).
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("prodeck:prefs") || "{}");
+          var mode = p.theme || "dark";
+          var dark =
+            mode === "dark" ||
+            (mode === "auto" &&
+              window.matchMedia &&
+              matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+          if (p.accent) document.documentElement.style.setProperty("--accent", p.accent);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", dark ? "#0b1220" : "#eef2f7");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

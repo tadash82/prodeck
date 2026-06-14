@@ -12,6 +12,7 @@ import {
   setAllowShell,
 } from "../../lib/deckOps";
 import { useDeck } from "../../store/useDeck";
+import { Appearance } from "./Appearance";
 import { inputClass, Sheet } from "./Sheet";
 
 type Renaming = { kind: "profile" | "page"; id: string; value: string };
@@ -167,6 +168,8 @@ export function ManageSheet() {
             onAdd={(name) => apply((c) => addPage(c, active.id, name))}
           />
         </section>
+
+        <Appearance />
 
         <section className="flex flex-col gap-2">
           <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">

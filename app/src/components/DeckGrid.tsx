@@ -9,7 +9,9 @@ import {
 import { Icon } from "@iconify/react";
 
 import { moveButton } from "../lib/deckOps";
+import { useGridMetrics } from "../lib/useGridMetrics";
 import { useDeck } from "../store/useDeck";
+import { usePrefs } from "../store/usePrefs";
 import type { Button, Page } from "../types/protocol";
 import { DeckButton, markDragEnd } from "./DeckButton";
 
@@ -22,6 +24,7 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
   const editMode = useDeck((s) => s.editMode);
   const openEditor = useDeck((s) => s.openEditor);
   const apply = useDeck((s) => s.apply);
+  const size = usePrefs((s) => s.size);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -29,6 +32,7 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
 
   const cols = page.grid?.cols ?? 3;
   const rows = page.grid?.rows ?? 4;
+  const { ref, cell, gap, width } = useGridMetrics(cols, rows, size);
   const buttons = page.buttons ?? [];
   const byCell = new Map<string, Button>();
   for (const button of buttons) {
@@ -50,8 +54,13 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
 
   const grid = (
     <div
-      className="mx-auto grid w-full max-w-md gap-3"
-      style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      className="grid"
+      style={{
+        gridTemplateColumns: `repeat(${cols}, ${cell}px)`,
+        gridAutoRows: `${cell}px`,
+        gap: `${gap}px`,
+        width: `${width}px`,
+      }}
     >
       {Array.from({ length: rows * cols }, (_, index) => {
         const col = index % cols;
@@ -93,11 +102,16 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
     </div>
   );
 
-  if (!editMode) return grid;
   return (
-    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-      {grid}
-    </DndContext>
+    <div ref={ref} className="flex h-full w-full items-center justify-center">
+      {editMode ? (
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+          {grid}
+        </DndContext>
+      ) : (
+        grid
+      )}
+    </div>
   );
 }
 
