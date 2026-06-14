@@ -34,9 +34,19 @@ A análise completa das alternativas (Flutter, React Native, Kivy…) está em [
 
 ## Como rodar
 
+Instalar o comando globalmente (a PWA vem embutida no pacote):
+
 ```bash
-cd agent && uv run prodeck-agent          # primeiro plano (QR e URLs no terminal)
-uv run prodeck-agent --install-service    # ou: autostart via systemd de usuário
+uv tool install ./agent                   # instala o comando `prodeck-agent` no PATH
+prodeck-agent                             # primeiro plano (QR e URLs no terminal)
+prodeck-agent --install-service           # ou: autostart via systemd de usuário
+```
+
+Na primeira instalação o `uv` pode pedir `uv tool update-shell` (uma vez) para
+deixar `~/.local/bin` no PATH. Para desenvolver sem instalar, rode do source:
+
+```bash
+cd agent && uv run prodeck-agent
 ```
 
 No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie o QR da rede correta — o endereço já leva o token de pareamento. Depois use "Adicionar à tela inicial" para virar app fullscreen.

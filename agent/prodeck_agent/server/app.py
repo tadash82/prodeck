@@ -2,7 +2,7 @@
 
 import asyncio
 from contextlib import asynccontextmanager
-from pathlib import Path
+from importlib.resources import files
 
 import qrcode
 import qrcode.image.svg
@@ -18,7 +18,9 @@ from ..core.pairing import Pairing
 from ..core.state import StateWatcher
 from .ws import ConnectionManager, deck_ws
 
-STATIC_DIR = Path(__file__).parent.parent / "static"
+# Resolve pelo loader do pacote (não por caminho relativo a __file__), para que
+# a PWA seja servida tanto rodando do source quanto instalada via uv/pipx.
+STATIC_DIR = files("prodeck_agent") / "static"
 
 
 def pair_url(ip: str, port: int, token: str) -> str:
