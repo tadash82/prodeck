@@ -12,14 +12,14 @@ export function Sheet({
 }) {
   return (
     <motion.div
-      className="fixed inset-0 z-40 flex flex-col justify-end"
+      className="fixed inset-0 z-40 flex flex-col items-center justify-end"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <motion.div
-        className="relative max-h-[90vh] overflow-y-auto rounded-t-3xl border-t border-slate-800 bg-slate-900 p-5 pb-8"
+        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-3xl border-t border-slate-800 bg-slate-900 p-5 pb-8"
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}

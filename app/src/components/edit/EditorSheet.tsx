@@ -4,6 +4,7 @@ import { useState } from "react";
 import { newId, removeButton, upsertButton } from "../../lib/deckOps";
 import { useDeck, type EditTarget } from "../../store/useDeck";
 import type { Action, Button } from "../../types/protocol";
+import { ButtonIcon } from "../ButtonIcon";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
 import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
@@ -133,7 +134,7 @@ export function EditorSheet({ target }: { target: EditTarget }) {
               background: `linear-gradient(160deg, ${color}, color-mix(in srgb, ${color} 55%, #000))`,
             }}
           >
-            <Icon icon={icon} style={{ fontSize: "1.6rem" }} />
+            <ButtonIcon icon={icon} size="1.6rem" />
             <span className="max-w-14 truncate px-1 text-[8px] font-semibold">
               {label.trim() || "Botão"}
             </span>

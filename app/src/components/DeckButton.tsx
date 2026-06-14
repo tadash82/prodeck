@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useLongPress } from "../lib/useLongPress";
 import { useDeck, type ButtonResult } from "../store/useDeck";
 import type { Button } from "../types/protocol";
+import { ButtonIcon } from "./ButtonIcon";
 
 const FALLBACK_COLOR = "#3b82f6";
 const FALLBACK_ICON = "mdi:gesture-tap-button";
@@ -93,7 +94,7 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
       }}
       {...(editMode ? { ...attributes, ...listeners } : longPress.handlers)}
     >
-      <Icon icon={button.icon ?? FALLBACK_ICON} style={{ fontSize: "2.1rem" }} />
+      <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="2.1rem" />
       <span className="px-1 text-center text-[11px] leading-tight font-semibold text-white/90">
         {button.label}
       </span>
