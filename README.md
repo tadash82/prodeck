@@ -46,7 +46,7 @@ deixar `~/.local/bin` no PATH. Para desenvolver sem instalar, rode do source:
 cd agent && uv run prodeck-agent
 ```
 
-No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie o QR da rede correta — o endereço já leva o token de pareamento. Depois use "Adicionar à tela inicial" para virar app fullscreen.
+No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie o QR da rede correta — o endereço já leva o token de pareamento. Para abrir em tela cheia (sem a barra do navegador), veja [Instalar como app](#instalar-como-app-tela-cheia).
 
 **Três jeitos de configurar os botões** — todos sincronizam com todos os dispositivos na hora:
 
@@ -55,6 +55,12 @@ No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie 
 3. **No editor de código**: salve `~/.config/prodeck/profiles.json` — o agente detecta e replica em até 2 s.
 
 Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado).
+
+**Aparência e layout** (lápis → gerenciador): tema **claro/escuro/automático**, **cor de destaque** e espaçamento — salvos no próprio aparelho; e **grade configurável** por página (colunas × linhas, 1–8 × 1–10), com "Reorganizar botões" para distribuir sem buracos. Os botões preenchem a tela e se reajustam ao girar (retrato/paisagem).
+
+### Instalar como app (tela cheia)
+
+Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Acessando por `http://<ip-da-lan>:8710` (HTTP), o navegador trata como site comum: o menu mostra "Adicionar à tela inicial", mas o atalho abre dentro do navegador (com a barra). A instalação em tela cheia de verdade chega com o **TLS opcional** (mkcert), em desenvolvimento na Fase 4.
 
 Úteis:
 
@@ -88,6 +94,9 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 **`code` (ou outro programa) não abre ao tocar o botão**
 - O comando precisa existir no PATH do agente. Algumas máquinas têm `code-insiders` em vez de `code` — ajuste a ação do botão para o binário correto.
 
+**Não aparece "Instalar app" / abre com a barra do navegador**
+- O Chrome instala a PWA em tela cheia só a partir de **HTTPS** (ou `localhost`). Por `http://<ip>` ele trata como site comum — dá para "Adicionar à tela inicial", mas o atalho abre dentro do navegador. A instalação completa (sem barra) chega com o **TLS opcional** (mkcert). Ver [Instalar como app](#instalar-como-app-tela-cheia).
+
 ## Status
 
 - [x] Documentação e plano
@@ -95,4 +104,8 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 - [x] Fase 1 — MVP: 4 ações, pareamento por token, grid React — 2026-06-11
 - [x] Fase 2 — Editor de botões no celular, perfis/páginas, sincronização — 2026-06-11
 - [x] Fase 3 — Macros, shell/texto, botões com estado, autostart (+ sync de edições à mão) — 2026-06-11
-- [ ] Fase 4 — Polimento e distribuição (v1.0): temas, TLS opcional, binário, nome definitivo
+- [ ] Fase 4 — Polimento e distribuição (v1.0):
+  - [x] Nome definitivo (ProDeck), LICENSE MIT e guia de solução de problemas
+  - [x] Temas (claro/escuro/auto), cor de destaque e grade (colunas × linhas) configurável
+  - [ ] TLS opcional (mkcert) → Wake Lock nativo + instalação PWA em tela cheia
+  - [ ] Binário único (PyInstaller) e suporte a Windows
