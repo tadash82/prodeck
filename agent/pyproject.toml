@@ -1,6 +1,6 @@
 [project]
 name = "prodeck-agent"
-version = "1.1.0"
+version = "1.2.0"
 description = "ProDeck — agente que executa ações no PC a partir do deck no celular"
 readme = "README.md"
 requires-python = ">=3.12"

@@ -162,8 +162,9 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
 - [ ] Fase 5 — Em andamento:
   - [x] Sistema de plugins (ações por entry points `prodeck.actions`) — v1.1, 2026-06-14
   - [x] Perfil automático por janela ativa (X11) — v1.1, 2026-06-14
-  - [x] Abstração por SO (`core/platform/`) — prepara o Windows
-  - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh`
-  - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data)
-  - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC
+  - [x] Abstração por SO (`core/platform/`) — prepara o Windows — v1.2, 2026-06-15
+  - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh` — v1.2, 2026-06-15
+  - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data) — v1.2, 2026-06-15
+  - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC — v1.2, 2026-06-15
+  - [ ] Suporte a Windows (provider best-effort escrito, a validar) e multi-PC — sob demanda
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda
