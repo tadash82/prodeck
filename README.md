@@ -28,17 +28,20 @@ A análise completa das alternativas (Flutter, React Native, Kivy…) está em [
 | [02 — Análise de tecnologias](docs/02-analise-de-tecnologias.md) | Comparativo das opções e justificativa da stack |
 | [03 — Arquitetura](docs/03-arquitetura.md) | Componentes, protocolo, modelo de dados, segurança |
 | [04 — Plano de desenvolvimento](docs/04-plano-de-desenvolvimento.md) | Fases, entregáveis, critérios de aceite, riscos |
+| [05 — Modo painel (kiosk)](docs/05-modo-painel.md) | Guia: celular/tablet dedicado abrindo o deck no boot e sempre ligado |
 
 ## Como rodar
 
 Instalar o comando globalmente (a PWA vem embutida no pacote):
 
 ```bash
-uv tool install ./agent                   # do source (após publicar: uv tool install prodeck-agent)
+uv tool install prodeck-agent             # do PyPI, a PWA vem embutida (ou ./agent p/ instalar do source)
 prodeck-agent                             # 1º plano: abre a página de pareamento no navegador (--no-open desliga)
 prodeck-agent --tls                       # HTTPS: instala a PWA em tela cheia (ver "Instalar como app")
-prodeck-agent --install-service           # autostart via systemd (acrescente --tls p/ HTTPS no boot)
+prodeck-agent --install-service --tls     # autostart via systemd de usuário (recomendado p/ deixar rodando)
 ```
+
+Para **deixar rodando no dia a dia**, prefira o **serviço** (`--install-service`): ele sobe sozinho no login, num **ambiente de sessão limpo** do systemd. Isso importa se você costuma abrir o terminal **de dentro de um app empacotado** (o snap do VS Code, por exemplo) — esse ambiente pode poluir variáveis (`LD_LIBRARY_PATH`, `GTK_PATH`…) e fazer os programas que o agente lança **falharem sem erro visível** (ver [Solução de problemas](#solução-de-problemas)).
 
 Na primeira instalação o `uv` pode pedir `uv tool update-shell` (uma vez) para
 deixar `~/.local/bin` no PATH. Para desenvolver sem instalar, rode do source:
@@ -79,6 +82,8 @@ Aí ele serve o deck em **HTTP** (porta 8710 — configurar pelo PC, sem avisos)
 2. Escaneie **"abrir o ProDeck"** → o app abre já confiável (cadeado) → menu ⋮ → **"Instalar app"** → tela cheia.
 
 Sem digitar token nem topar avisos de "conexão não segura". O certificado fica em `~/.config/prodeck/tls/`, cobre todos os IPs locais e regenera sozinho se a rede mudar.
+
+**Quer que o deck abra sozinho quando o celular liga e fique sempre ligado?** Para um aparelho dedicado como painel fixo (kiosk), veja **[05 — Modo painel](docs/05-modo-painel.md)**.
 
 > **Configurar pelo PC:** abra **`http://localhost:8710/qr`** e clique em **"Abrir o deck aqui"** (não precisa copiar token). O deck roda em HTTP no PC, sem avisos, e tudo que você muda sincroniza com o celular na hora.
 
@@ -142,6 +147,10 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
 **`code` (ou outro programa) não abre ao tocar o botão**
 - O comando precisa existir no PATH do agente. Algumas máquinas têm `code-insiders` em vez de `code` — ajuste a ação do botão para o binário correto.
 
+**Os botões "executam" (log diz `→ ok`) mas nada abre**
+- Causa provável: o agente foi iniciado **de dentro de um app empacotado** (snap) — tipicamente o **terminal integrado do VS Code/Insiders**. Ele herda variáveis do sandbox (`LD_LIBRARY_PATH`, `GTK_PATH`, `LOCPATH`…) apontando para `/snap/…` e as repassa aos programas que lança; apps do sistema (gnome-terminal, etc.) carregam a glibc errada e morrem com `symbol lookup error … GLIBC_PRIVATE`. Como `open_app` dispara e não acompanha o filho, o log mostra "ok".
+- **Solução:** rode o agente **fora do sandbox**. O caminho recomendado é o **serviço systemd de usuário** (`prodeck-agent --install-service`), que sobe num ambiente de sessão limpo; ou inicie de um terminal **normal** do sistema (não o de um snap).
+
 **Não aparece "Instalar app" / abre com a barra do navegador**
 - O Chrome instala a PWA em tela cheia só a partir de **HTTPS** (ou `localhost`). Por `http://<ip>` ele trata como site comum — dá para "Adicionar à tela inicial", mas o atalho abre dentro do navegador. A instalação completa (sem barra) vem com o **TLS opcional** (`--tls`, certificado local gerado pelo próprio agente). Ver [Instalar como app](#instalar-como-app-tela-cheia).
 
@@ -166,5 +175,5 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh` — v1.2, 2026-06-15
   - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data) — v1.2, 2026-06-15
   - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC — v1.2, 2026-06-15
-  - [ ] Suporte a Windows (provider best-effort escrito, a validar) e multi-PC — sob demanda
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda
+  - [ ] Multi-PC: um celular controla várias máquinas (seletor de agente) — sob demanda
