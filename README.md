@@ -51,11 +51,11 @@ No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie 
 
 **Três jeitos de configurar os botões** — todos sincronizam com todos os dispositivos na hora:
 
-1. **Pelo celular**: toque no lápis (ou segure um botão) — editor com ações, macros, 200k ícones e cores.
+1. **Pelo celular**: toque no lápis (ou segure um botão) — editor com ações, macros, 200k ícones e cores. Tem **seletor de apps instalados** (já traz o ícone do programa), **atalhos prontos** (mutar som/mic, volume, bloquear tela — já com o comando certo da sua máquina) e um botão **"Testar"** que executa a ação na hora, sem salvar.
 2. **Pelo navegador do PC**: abra `http://localhost:8710/qr` e clique em **"Abrir o deck aqui"** — a mesma PWA roda no desktop, sem precisar copiar token.
 3. **No editor de código**: salve `~/.config/prodeck/profiles.json` — o agente detecta e replica em até 2 s.
 
-Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado).
+Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado). Deslize para a esquerda/direita troca de página.
 
 **Aparência e layout** (lápis → gerenciador): tema **claro/escuro/automático**, **cor de destaque** e espaçamento — salvos no próprio aparelho; e **grade configurável** por página (colunas × linhas, 1–8 × 1–10), com "Reorganizar botões" para distribuir sem buracos. Os botões preenchem a tela e se reajustam ao girar (retrato/paisagem).
 
@@ -98,6 +98,7 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 
 **Atalhos de teclado (`hotkey`/`text`) não funcionam**
 - O agente injeta teclas via `pynput` em **X11**. Em sessão **Wayland** isso é restrito pelo compositor — use uma sessão Xorg (as demais ações continuam funcionando). Suporte a Wayland via ydotool/portal está no backlog.
+- **Atalho global do desktop** (abrir terminal, bloquear tela, teclas de mídia) por `hotkey` **não funciona**: o sistema captura essas combinações antes, e a injeção não as dispara. Use a ação **Programa** com o comando direto, ou os **"Atalhos prontos"** do editor (terminal → `gnome-terminal`, bloquear → `loginctl lock-session`, mídia → `wpctl`/`pactl`). O `hotkey` serve para atalhos que o **app em foco** entende (Ctrl+S, Ctrl+C).
 
 **O botão de mute não reflete o estado real do mic/áudio**
 - O estado vem de `wpctl` (PipeWire) com fallback para `pactl` (PulseAudio). Garanta que um dos dois esteja instalado e no PATH.
@@ -112,7 +113,7 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - O comando precisa existir no PATH do agente. Algumas máquinas têm `code-insiders` em vez de `code` — ajuste a ação do botão para o binário correto.
 
 **Não aparece "Instalar app" / abre com a barra do navegador**
-- O Chrome instala a PWA em tela cheia só a partir de **HTTPS** (ou `localhost`). Por `http://<ip>` ele trata como site comum — dá para "Adicionar à tela inicial", mas o atalho abre dentro do navegador. A instalação completa (sem barra) chega com o **TLS opcional** (mkcert). Ver [Instalar como app](#instalar-como-app-tela-cheia).
+- O Chrome instala a PWA em tela cheia só a partir de **HTTPS** (ou `localhost`). Por `http://<ip>` ele trata como site comum — dá para "Adicionar à tela inicial", mas o atalho abre dentro do navegador. A instalação completa (sem barra) vem com o **TLS opcional** (`--tls`, certificado local gerado pelo próprio agente). Ver [Instalar como app](#instalar-como-app-tela-cheia).
 
 ## Status
 

@@ -115,7 +115,10 @@ Servir a PWA via `http://192.168.x.x` (sem TLS) tem duas consequências que **t�
 1. **Wake Lock API exige contexto seguro (HTTPS)** → no MVP, manter a tela acesa usa a técnica do NoSleep.js (vídeo mudo em loop), que funciona em HTTP.
 2. **Instalação PWA "completa"** (service worker) também pede HTTPS → em HTTP, o "Adicionar à tela inicial" ainda funciona como atalho fullscreen, suficiente para o MVP.
 
-Na Fase 4, o agente pode gerar certificado TLS próprio (mkcert) para quem quiser a experiência PWA completa. Não bloqueia nada antes disso.
+**Resolvido na Fase 4** (`--tls`): o agente gera um certificado TLS próprio com a
+lib `cryptography` (sem mkcert nem `sudo`) e serve HTTP + HTTPS no mesmo event
+loop — Wake Lock nativo e PWA em tela cheia passam a funcionar. Sem `--tls`, o
+NoSleep.js e o atalho fullscreen continuam cobrindo o uso em HTTP.
 
 ---
 

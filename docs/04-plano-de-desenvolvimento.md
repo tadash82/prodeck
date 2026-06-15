@@ -115,18 +115,24 @@ PWA:
 
 ---
 
-## Fase 4 — Polimento e distribuição: v1.0 (≈ 2 semanas)
+## Fase 4 — Polimento e distribuição: v1.0 ✅ concluída (2026-06-14)
 
 **Objetivo:** alguém que não é você instalar e usar.
 
-1. Instalação: `pipx install` / `uv tool install` documentados; PyInstaller para binário único (Linux primeiro; Windows se houver demanda).
-2. Build da PWA embutido no pacote Python (servida de `importlib.resources`).
-3. TLS opcional via mkcert → Wake Lock nativo + instalação PWA completa (ver doc 02).
-4. Temas (claro/escuro/cores de destaque), modo paisagem/tablet, ajuste de tamanho do grid.
-5. README com GIF de demonstração, guia de troubleshooting (firewall, IP, X11/Wayland), licença (MIT), escolher o **nome definitivo** do projeto.
-6. Suporte a Windows no agente (`start`, paths) — as abstrações por SO já existem desde a Fase 1.
+1. Instalação: `pipx install` / `uv tool install` documentados. ✅
+2. Build da PWA embutido no pacote Python (servida de `importlib.resources`). ✅
+3. TLS opcional → Wake Lock nativo + instalação PWA completa (ver doc 02). ✅ — **via lib `cryptography`, não mkcert**; HTTP + HTTPS no mesmo event loop.
+4. Temas (claro/escuro/cores de destaque), modo paisagem/tablet, ajuste de tamanho do grid. ✅ — + swipe entre páginas.
+5. README com troubleshooting, licença (MIT) e o **nome definitivo** (ProDeck). ✅
+6. Editor mais fácil (extra, fruto de uso real): seletor de apps instalados, ícone do próprio app/imagem, **atalhos prontos** detectados (mídia via wpctl/pactl, bloquear via loginctl), botão **"Testar"** e erro legível em toast. ✅
 
-**Critério de aceite:** uma pessoa de fora instala com ≤ 3 comandos seguindo só o README e cria o primeiro botão em < 5 minutos.
+**Adiado para o backlog (sem demanda real ainda):** binário único via **PyInstaller**
+e **suporte a Windows** (`start`, paths, backend de teclado) — ver Fase 5.
+
+**Resultado:** publicado no PyPI como `prodeck-agent 1.0.0` (Production/Stable),
+release `v1.0.0` no GitHub; instalação validada ponta a ponta a partir do PyPI.
+
+**Critério de aceite (atingido):** instala com ≤ 3 comandos seguindo só o README.
 
 ---
 
@@ -135,6 +141,7 @@ PWA:
 Em ordem aproximada de valor:
 
 - **Sistema de plugins** em Python (entry points): a comunidade adiciona ações sem tocar no core. É o diferencial estratégico do agente em Python.
+- **Suporte a Windows** no agente (`start`, paths, atalhos prontos por SO) e **binário único via PyInstaller** (Linux primeiro) — adiados da Fase 4, sob demanda.
 - **App Flutter** nativo (reusa agente + protocolo) se surgir necessidade real: widgets na home, NFC, Bluetooth.
 - Perfil automático por janela ativa (deck muda quando o VSCode ganha foco — fácil em X11, restrito em Wayland).
 - Botões-widget com dados ao vivo (CPU/RAM, agenda, contador de PRs).

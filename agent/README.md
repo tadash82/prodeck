@@ -22,11 +22,12 @@ No celular (mesma rede do PC), escaneie o QR. Para abrir em **tela cheia** (PWA 
 | `prodeck-agent --install-service` | autostart via systemd de usuário (acrescente `--tls` p/ HTTPS no boot) |
 | `prodeck-agent --reset-pairing` | gera token novo e esquece os dispositivos pareados |
 
-Configure os botões pelo próprio celular (toque no lápis), pelo navegador do PC, ou editando `~/.config/prodeck/profiles.json` (sincroniza sozinho). Tipos de ação: programa, pasta, URL, atalho de teclado, texto, shell (opt-in) e macro. Botões podem refletir estado real do PC (mic/áudio mutado).
+Configure os botões pelo próprio celular (toque no lápis), pelo navegador do PC, ou editando `~/.config/prodeck/profiles.json` (sincroniza sozinho). O editor tem **seletor de apps instalados** (já traz o ícone do programa), **atalhos prontos** detectados na máquina (mutar som/mic, volume, bloquear tela) e botão **"Testar"** que roda a ação sem salvar. Tipos de ação: programa, pasta, URL, atalho de teclado, texto, shell (opt-in) e macro. Botões podem refletir estado real do PC (mic/áudio mutado).
 
 ## Requisitos
 
 - **Python ≥ 3.12**, **Linux**. A ação de atalho de teclado (`hotkey`) usa X11; as demais funcionam também em Wayland.
+- Atalhos de mídia/bloquear usam o que a máquina tiver: `wpctl` (PipeWire) ou `pactl` (PulseAudio) para áudio; `loginctl`/`xdg-screensaver` para bloquear. Detectados automaticamente.
 
 ## Documentação e roadmap
 

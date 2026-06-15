@@ -16,9 +16,12 @@
 ┌────────────────────────────▼────────────────────────────────────┐
 │                     Agente no PC (Python)                       │
 │                                                                 │
-│  FastAPI/Uvicorn                                                │
+│  FastAPI/Uvicorn  (com --tls: HTTP na porta + HTTPS na porta+1) │
 │  ├── GET /            → serve a PWA (build estático embutido)   │
 │  ├── GET /qr          → página/imagem do QR de pareamento       │
+│  ├── GET /rootCA.pem  → certificado raiz p/ instalar (com --tls)│
+│  ├── GET /apps        → apps instalados (.desktop) p/ o editor  │
+│  ├── GET /presets     → atalhos prontos detectados (mídia/sist.)│
 │  └── WS  /ws          → protocolo do deck                       │
 │                                                                 │
 │  ┌────────────┐  ┌───────────────┐  ┌───────────────────────┐   │
@@ -46,12 +49,12 @@ ProDeck/
 │   ├── pyproject.toml
 │   ├── tests/                      # pytest (modelos, config, engine, WS, file-sync)
 │   └── prodeck_agent/
-│       ├── main.py                 # CLI: --port, --reset-pairing, --(un)install-service, --no-tray
+│       ├── main.py                 # CLI: --port, --tls, --no-open, --no-tray, --reset-pairing, --(un)install-service
 │       ├── tray.py                 # bandeja best-effort (pystray)
-│       ├── service.py              # autostart: unit systemd de usuário
+│       ├── service.py              # autostart: unit systemd de usuário (repassa --tls)
 │       ├── gen_schema.py           # JSON Schema do protocolo (gera os tipos TS)
 │       ├── server/
-│       │   ├── app.py              # FastAPI, rotas HTTP, estáticos da PWA, lifespan do watcher
+│       │   ├── app.py              # FastAPI, rotas HTTP (/qr /apps /presets /rootCA.pem), estáticos, lifespan
 │       │   └── ws.py               # protocolo WS, ConnectionManager (broadcast)
 │       ├── core/
 │       │   ├── models.py           # Pydantic: config + protocolo — fonte única de verdade
@@ -60,15 +63,19 @@ ProDeck/
 │       │   ├── state.py            # StateWatcher: providers wpctl/pactl + sync do arquivo
 │       │   ├── config.py           # ConfigStore: escrita atômica, backup, migração, default
 │       │   ├── pairing.py          # token, devices.json, notificação de pareamento
+│       │   ├── apps.py             # lista apps instalados (.desktop) + ícones, p/ o seletor do editor
+│       │   ├── audio.py            # atalhos de mídia (wpctl/pactl) detectados
+│       │   ├── system.py           # comandos de sistema (bloquear/print) detectados
+│       │   ├── tls.py              # CA + certificado local (cryptography), SAN p/ todos os IPs
 │       │   └── net.py              # IPs de todas as interfaces
 │       └── static/                 # build da PWA (vite build publica aqui)
 ├── app/                            # PWA (Vite + React + TS + Tailwind + Motion)
 │   ├── tests/                      # vitest (deckOps)
 │   └── src/
-│       ├── components/             # DeckGrid, DeckButton, StatusBar, Toast, ConnectScreen
-│       ├── components/edit/        # EditorSheet, MacroBuilder, IconPicker, ColorPicker, ManageSheet
-│       ├── store/useDeck.ts        # Zustand: conexão, layout, edição, estados, toasts
-│       ├── lib/                    # deckOps (operações puras), identity, useLongPress, keepAwake
+│       ├── components/             # DeckGrid, DeckButton, StatusBar, Toast, ConnectScreen, ButtonIcon
+│       ├── components/edit/        # EditorSheet, MacroBuilder, IconPicker, ColorPicker, ManageSheet, AppPicker, QuickActions, Appearance
+│       ├── store/                  # useDeck (conexão, layout, edição, estados, toasts), usePrefs (tema/cor/grade, localStorage)
+│       ├── lib/                    # deckOps (operações puras), identity, useLongPress, keepAwake, useGridMetrics
 │       ├── ws/client.ts            # reconexão com backoff, RTT, handshake
 │       └── types/protocol.ts       # GERADO a partir do JSON Schema do Pydantic
 ├── scripts/
@@ -102,7 +109,7 @@ ProDeck/
           "buttons": [
             {
               "id": "b1",
-              "position": [0, 0],
+              "position": { "col": 0, "row": 0 },
               "label": "ProDeck",
               "icon": "mdi:microsoft-visual-studio-code",
               "color": "#2dd4bf",
@@ -110,7 +117,7 @@ ProDeck/
             },
             {
               "id": "b2",
-              "position": [1, 0],
+              "position": { "col": 1, "row": 0 },
               "label": "Downloads",
               "icon": "mdi:folder-download",
               "color": "#f59e0b",
@@ -118,15 +125,16 @@ ProDeck/
             },
             {
               "id": "b3",
-              "position": [2, 0],
+              "position": { "col": 2, "row": 0 },
               "label": "Mutar Mic",
               "icon": "mdi:microphone-off",
               "color": "#ef4444",
-              "action": { "type": "hotkey", "keys": ["ctrl", "shift", "m"] }
+              "action": { "type": "open_app", "command": ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"] },
+              "state": "mic_muted"
             },
             {
               "id": "b4",
-              "position": [0, 1],
+              "position": { "col": 0, "row": 1 },
               "label": "Modo Trabalho",
               "icon": "mdi:rocket-launch",
               "color": "#8b5cf6",
@@ -172,7 +180,8 @@ Envelope único nos dois sentidos:
 | C → S | `deck.get` | `{}` | Pedir layout atual |
 | S → C | `deck.layout` | perfil completo (modelo acima) | Após `deck.get` ou mudança de config |
 | C → S | `action.trigger` | `{ button_id }` | Toque no botão |
-| S → C | `action.result` | `{ button_id, status: "ok"\|"error", message? }` | Resultado da execução (feedback visual) |
+| C → S | `action.test` | `{ action }` | "Testar" no editor: roda a ação avulsa, sem salvar botão |
+| S → C | `action.result` | `{ button_id, status: "ok"\|"error", message? }` | Resultado da execução (feedback visual; teste responde com `button_id: "__test__"`) |
 | C → S | `deck.save` | config completa | Edição pelo app/navegador; resposta é `deck.layout` |
 | S → C | `state.update` | `{ button_id, active }` | Botões com estado (mute etc.): snapshot no `deck.get`, push pós-trigger e polling de 2 s |
 | S → C | `error` | `{ message }` | Mensagem/config inválida — erros de validação resumidos de forma amigável |
@@ -213,9 +222,15 @@ O agente **executa comandos no PC** — é o ponto mais sensível do projeto:
 | Dispositivo novo silencioso | Notificação desktop no primeiro pareamento; revogação em lote com `--reset-pairing` |
 | Injeção de comando | Ações executam `subprocess` **sem shell** e com lista de argumentos; a ação `shell` é opt-in (`allow_shell`, padrão off), com aviso no app e log de toda execução |
 | Exposição fora da LAN | Bind padrão na interface local; documentação explícita: **nunca** expor a porta na internet; rate limit por conexão |
+| Endpoints HTTP auxiliares (`/apps`, `/presets`) | Exigem o token (`secrets.compare_digest`); sem token → 401 |
 | Auditoria | loguru registra cada ação executada com origem (dispositivo) e timestamp |
 
-TLS local (mkcert) entra na Fase 4 como opcional — ver nota sobre HTTPS no doc 02.
+TLS local **implementado na Fase 4** (opcional, `--tls`): um CA + certificado de
+servidor **gerados pela lib `cryptography`** (sem mkcert nem `sudo`), guardados em
+`~/.config/prodeck/tls/`, com SAN cobrindo todos os IPs locais. Com `--tls` o
+mesmo app é servido por **dois listeners no mesmo event loop**: HTTP na porta
+(configurar pelo PC, sem aviso de certificado) e HTTPS na porta+1 (PWA em tela
+cheia no celular). Ver nota sobre HTTPS no doc 02.
 
 ## Decisões registradas (mini-ADRs)
 
@@ -231,3 +246,6 @@ TLS local (mkcert) entra na Fase 4 como opcional — ver nota sobre HTTPS no doc
 | 8 | Estado dos botões por polling (wpctl a cada 2 s) + push pós-trigger | Simples, sem dependências; eventos nativos do PipeWire são complexos | Precisar de latência sub-segundo ou de muitos providers |
 | 9 | Sync de edições à mão por mtime no loop do watcher | Zero dependência extra (sem inotify/watchdog), 1 stat() a cada 2 s | Config crescer para múltiplos arquivos |
 | 10 | `allow_shell` vive na própria config (editável pelo app) | Fricção consciente, não segurança real: `open_app` já executa binários arbitrários — o modelo de ameaça é o dispositivo pareado | Pareamento ganhar níveis de permissão |
+| 11 | TLS por certificado gerado pela lib `cryptography` (não mkcert) | Zero dependência externa e sem `sudo`; o agente já é Python | Precisar de cadeia de confiança reconhecida pelo SO |
+| 12 | Com `--tls`, HTTP + HTTPS no mesmo event loop (não dois processos) | Broadcast entre dispositivos funciona cross-listener; configurar pelo PC sem aviso de certificado e PWA em tela cheia no celular | — |
+| 13 | Atalhos globais do desktop (bloquear, terminal, mídia) por **comando direto detectado**, não por `hotkey` | A injeção do pynput não dispara o grab global do compositor (só atalhos do app em foco); comando é determinístico. Detecção no agente (`audio.py`/`system.py`), exposta em `/presets` | Backend de input ganhar suporte a `ydotool`/portal |
