@@ -143,7 +143,7 @@ Em ordem aproximada de valor:
 - ✅ **Sistema de plugins** em Python (entry points `prodeck.actions`) — **entregue (2026-06-14)**: pacotes externos adicionam ações sem tocar no core; tipo de ação `plugin` genérico, descoberta via `core/plugins.py`, metadados em `/plugins`, editor renderiza os campos, exemplo `notify`. Ver "Plugins" em `docs/03`.
 - **Suporte a Windows** no agente (`start`, paths, atalhos prontos por SO) e **binário único via PyInstaller** (Linux primeiro) — adiados da Fase 4, sob demanda.
 - **App Flutter** nativo (reusa agente + protocolo) se surgir necessidade real: widgets na home, NFC, Bluetooth.
-- Perfil automático por janela ativa (deck muda quando o VSCode ganha foco — fácil em X11, restrito em Wayland).
+- ✅ **Perfil automático por janela ativa** — **entregue (2026-06-14)**: regras `{match, profile}` em `auto_profile`; o watcher lê a janela em foco (Xlib/X11) e troca o perfil sozinho (`deck.layout` id `auto-profile`). Editável em Perfis e páginas. Restrito a X11.
 - Botões-widget com dados ao vivo (CPU/RAM, agenda, contador de PRs).
 - Integrações: Home Assistant, KDE Connect, espelhar para OBS (aí sim, como plugin).
 - Multi-PC: um celular controla várias máquinas (seletor de agente).

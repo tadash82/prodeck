@@ -154,6 +154,26 @@ export function setAllowShell(config: DeckConfig, allow: boolean): DeckConfig {
   return next;
 }
 
+// ---------------------------------------------------------------- perfil automático
+
+/** Adiciona uma regra "janela contém X → ativa o perfil Y". */
+export function addAutoRule(config: DeckConfig, match: string, profile: string): DeckConfig {
+  const term = match.trim();
+  if (!term) throw new Error("Digite parte do nome da janela.");
+  if (!(config.profiles ?? []).some((p) => p.id === profile)) {
+    throw new Error("Escolha um perfil.");
+  }
+  const next = clone(config);
+  next.auto_profile = [...(next.auto_profile ?? []), { match: term, profile }];
+  return next;
+}
+
+export function removeAutoRule(config: DeckConfig, index: number): DeckConfig {
+  const next = clone(config);
+  next.auto_profile = (next.auto_profile ?? []).filter((_, i) => i !== index);
+  return next;
+}
+
 // ---------------------------------------------------------------- grade
 
 /** Limites de colunas/linhas — espelham os Field(ge/le) do modelo Pydantic. */

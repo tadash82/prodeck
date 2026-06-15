@@ -34,8 +34,9 @@
 │ open_app·open_path·open_url·hotkey·text·shell·macro·plugin      │
 │  (macro = passos com delays; shell opt-in; plugin = entry point)│
 │                                                                 │
-│  StateWatcher: estado dos botões (wpctl) a cada 2 s + push      │
-│  pós-trigger + sync de edições à mão no profiles.json (mtime)   │
+│  StateWatcher (loop 2 s): estado dos botões (wpctl) + push      │
+│  pós-trigger + sync de edições à mão (mtime) + perfil automático│
+│  por janela ativa (X11)                                         │
 │  pystray (bandeja, best-effort) · loguru (log) · qrcode         │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -68,6 +69,7 @@ ProDeck/
 │       │   ├── audio.py            # atalhos de mídia (wpctl/pactl) detectados
 │       │   ├── system.py           # comandos de sistema (bloquear/print) detectados
 │       │   ├── plugins.py          # descoberta de plugins (entry points prodeck.actions)
+│       │   ├── window.py           # janela ativa (Xlib) + match de regras p/ perfil automático
 │       │   ├── tls.py              # CA + certificado local (cryptography), SAN p/ todos os IPs
 │       │   └── net.py              # IPs de todas as interfaces
 │       ├── plugins/                # plugins que acompanham o agente (ex.: notify)
@@ -164,6 +166,7 @@ Regras:
 - **Ações são uma união discriminada** pelo campo `type` (Pydantic `Discriminator`) — tipos atuais: `open_app`, `open_path`, `open_url`, `hotkey`, `text`, `shell`, `macro` (passos das ações básicas + `delay`) e `plugin` (ação de pacote externo: `{ name, params }`). Adicionar um tipo novo não quebra os existentes.
 - `command` é **lista de argumentos** (nunca string única) → execução sem shell por padrão, sem injeção. A ação `shell` é a exceção explícita, atrás de `allow_shell` (padrão `false`) e sempre logada.
 - Botões podem ter `"state": "mic_muted" | "audio_muted"` — o agente avalia o provider (wpctl/pactl) e envia `state.update` quando o fato muda no PC.
+- `auto_profile` (opcional, padrão `[]`) é uma lista de regras `{ match, profile }`: quando a **janela em foco** no PC casa (`match` é substring na classe/título), o agente ativa aquele perfil e propaga `deck.layout` com `id: "auto-profile"`. Só age na *mudança* de janela (não briga com a troca manual) e só em X11. Sem regras, o recurso fica inerte.
 - `version` no topo + função de migração simples permitem evoluir o formato sem quebrar configs antigas; toda escrita é atômica e gera `.bak` da versão anterior.
 - A PWA recebe esse modelo já resolvido via WS (`deck.layout`) — o celular não lê arquivo nenhum. O arquivo, porém, pode ser editado à mão no PC: o watcher detecta pelo mtime e propaga a todos os dispositivos.
 
@@ -190,8 +193,9 @@ Envelope único nos dois sentidos:
 | S → C | `error` | `{ message }` | Mensagem/config inválida — erros de validação resumidos de forma amigável |
 
 Pushes sem requisição: além das respostas, o cliente recebe `deck.layout` com
-`id: "broadcast"` (outro dispositivo salvou) ou `id: "file-sync"` (o
-profiles.json mudou no disco), e `state.update` quando um fato do sistema muda.
+`id: "broadcast"` (outro dispositivo salvou), `id: "file-sync"` (o profiles.json
+mudou no disco) ou `id: "auto-profile"` (a janela em foco trocou o perfil ativo),
+e `state.update` quando um fato do sistema muda.
 
 - `id` correlaciona requisição/resposta; `v` permite evoluir o protocolo.
 - Os modelos dessas mensagens vivem em `models.py` (Pydantic) e geram os tipos TS da PWA — **uma única fonte de verdade**.
@@ -284,3 +288,4 @@ agente. O agente já acompanha um exemplo (`prodeck_agent/plugins/notify.py`).
 | 12 | Com `--tls`, HTTP + HTTPS no mesmo event loop (não dois processos) | Broadcast entre dispositivos funciona cross-listener; configurar pelo PC sem aviso de certificado e PWA em tela cheia no celular | — |
 | 13 | Atalhos globais do desktop (bloquear, terminal, mídia) por **comando direto detectado**, não por `hotkey` | A injeção do pynput não dispara o grab global do compositor (só atalhos do app em foco); comando é determinístico. Detecção no agente (`audio.py`/`system.py`), exposta em `/presets` | Backend de input ganhar suporte a `ydotool`/portal |
 | 14 | Plugins por **um único tipo de ação `plugin` genérico** (`{name, params}`), não estendendo a união Pydantic em runtime | Mantém o protocolo fechado e os tipos TS estáveis (gerados em build); o plugin valida os próprios `params` e descreve seus campos via `/plugins` | Precisar de validação forte por plugin no core |
+| 15 | Perfil automático por **polling da janela ativa (Xlib) no loop do watcher**, só na mudança de janela | Reusa o loop de 2 s e o broadcast; Xlib já vem com o pynput (sem dependência nova); só agir na mudança evita brigar com a troca manual | Suporte a Wayland (sem `_NET_ACTIVE_WINDOW`) → portal/compositor |

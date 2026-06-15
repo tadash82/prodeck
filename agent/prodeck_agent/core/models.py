@@ -133,11 +133,19 @@ class Profile(StrictModel):
     pages: list[Page] = []
 
 
+class AutoProfileRule(StrictModel):
+    # troca o perfil ativo quando a janela em foco casa: `match` é uma substring
+    # (case-insensitive) procurada na classe/título da janela; `profile` é o id
+    match: str = Field(min_length=1)
+    profile: str
+
+
 class DeckConfig(StrictModel):
     version: int = CONFIG_VERSION
     active_profile: str
     profiles: list[Profile] = []
     allow_shell: bool = False
+    auto_profile: list[AutoProfileRule] = []
 
     @model_validator(mode="after")
     def _consistente(self) -> "DeckConfig":

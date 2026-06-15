@@ -2,9 +2,11 @@ import { Icon } from "@iconify/react";
 import { useState } from "react";
 
 import {
+  addAutoRule,
   addPage,
   addProfile,
   GRID_LIMITS,
+  removeAutoRule,
   removePage,
   removeProfile,
   renamePage,
@@ -210,6 +212,37 @@ export function ManageSheet() {
           </section>
         )}
 
+        <section className="flex flex-col gap-2">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Perfil automático
+          </h3>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Troca o perfil sozinho quando a janela em foco no PC combina (só em X11). Ex.:
+            “code” → Dev. Confere a classe ou o título da janela.
+          </p>
+          {(config.auto_profile ?? []).map((rule, index) => (
+            <div
+              key={`${rule.match}:${index}`}
+              className="flex items-center gap-2 rounded-xl bg-slate-800/70 px-3 py-1.5"
+            >
+              <span className="flex-1 truncate text-sm text-slate-200">
+                <span className="text-slate-500">contém</span> “{rule.match}”{" "}
+                <span className="text-slate-500">→</span>{" "}
+                {profiles.find((p) => p.id === rule.profile)?.name ?? rule.profile}
+              </span>
+              {rowButton(
+                () => apply((c) => removeAutoRule(c, index)),
+                "mdi:trash-can-outline",
+                true,
+              )}
+            </div>
+          ))}
+          <AutoRuleAdd
+            profiles={profiles.map((p) => ({ id: p.id, name: p.name }))}
+            onAdd={(match, profile) => apply((c) => addAutoRule(c, match, profile))}
+          />
+        </section>
+
         <Appearance />
 
         <section className="flex flex-col gap-2">
@@ -257,6 +290,51 @@ function AddRow({ placeholder, onAdd }: { placeholder: string; onAdd: (name: str
         onKeyDown={(e) => e.key === "Enter" && add()}
         placeholder={placeholder}
       />
+      <button
+        type="button"
+        onClick={add}
+        className="rounded-xl bg-slate-800 p-2.5 text-slate-300 active:bg-slate-700"
+      >
+        <Icon icon="mdi:plus" style={{ fontSize: "1.1rem" }} />
+      </button>
+    </div>
+  );
+}
+
+function AutoRuleAdd({
+  profiles,
+  onAdd,
+}: {
+  profiles: { id: string; name: string }[];
+  onAdd: (match: string, profile: string) => void;
+}) {
+  const [match, setMatch] = useState("");
+  const [profile, setProfile] = useState(profiles[0]?.id ?? "");
+  const add = () => {
+    if (!match.trim() || !profile) return;
+    onAdd(match, profile);
+    setMatch("");
+  };
+  return (
+    <div className="flex items-center gap-1.5">
+      <input
+        className={inputClass}
+        value={match}
+        onChange={(e) => setMatch(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && add()}
+        placeholder="janela contém… (ex.: code)"
+      />
+      <select
+        className={`${inputClass} w-28 shrink-0`}
+        value={profile}
+        onChange={(e) => setProfile(e.target.value)}
+      >
+        {profiles.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
       <button
         type="button"
         onClick={add}

@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addAutoRule,
   addPage,
   addProfile,
   moveButton,
+  removeAutoRule,
   removeButton,
   removePage,
   removeProfile,
@@ -115,5 +117,18 @@ describe("deckOps", () => {
     expect(pos.b1).toEqual({ col: 0, row: 0 });
     expect(pos.b3).toEqual({ col: 1, row: 0 });
     expect(pos.b2).toEqual({ col: 2, row: 0 });
+  });
+
+  it("addAutoRule acrescenta a regra e valida match/perfil", () => {
+    const c = addAutoRule(config(), " code ", "a");
+    expect(c.auto_profile).toEqual([{ match: "code", profile: "a" }]);
+    expect(() => addAutoRule(config(), "  ", "a")).toThrow();
+    expect(() => addAutoRule(config(), "code", "naoexiste")).toThrow();
+  });
+
+  it("removeAutoRule remove pelo índice", () => {
+    let c = addAutoRule(config(), "code", "a");
+    c = addAutoRule(c, "firefox", "a");
+    expect(removeAutoRule(c, 0).auto_profile).toEqual([{ match: "firefox", profile: "a" }]);
   });
 });

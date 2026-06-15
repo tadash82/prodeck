@@ -15,6 +15,7 @@ from collections.abc import Callable
 from loguru import logger
 
 from .models import DeckLayoutMessage, StateUpdateMessage, StateUpdatePayload
+from .window import active_window, match_profile
 
 
 def _muted(kind: str) -> bool:
@@ -64,6 +65,7 @@ class StateWatcher:
         self.connections = connections
         self._last: dict[str, bool] = {}
         self._config_mtime = store.mtime()
+        self._last_window: tuple[str, str] | None = None
         # refs fortes: create_task sem ref pode ser coletado no meio do sleep
         self._pending: set[asyncio.Task] = set()
 
@@ -87,6 +89,38 @@ class StateWatcher:
         logger.info("profiles.json mudou no disco — propagando aos dispositivos")
         await self.connections.broadcast(
             DeckLayoutMessage(id="file-sync", payload=config)
+        )
+
+    # ------------------------------------------------- perfil automático
+
+    async def check_active_window(self) -> None:
+        """Se houver regras e a janela em foco mudou, troca o perfil ativo.
+
+        Só age na **mudança** de janela (não fica brigando com troca manual do
+        usuário enquanto ele segue no mesmo app) e só quando a regra aponta para
+        um perfil existente e diferente do atual. Persiste e propaga como
+        `deck.layout` com `id: "auto-profile"`.
+        """
+        if not self.connections.active:
+            return  # ninguém conectado: nada a propagar, evita IO/disco à toa
+        config = self.store.load_config()
+        if not config.auto_profile:
+            return
+        window = active_window()
+        if window is None or window == self._last_window:
+            return
+        self._last_window = window
+        target = match_profile(config.auto_profile, *window)
+        if target is None or target == config.active_profile:
+            return
+        if not any(p.id == target for p in config.profiles):
+            return  # regra aponta para um perfil que não existe (mais)
+        config.active_profile = target
+        self.store.save_config(config)
+        self.mark_config_synced()
+        logger.info("perfil automático: janela '{}' → perfil '{}'", window[0], target)
+        await self.connections.broadcast(
+            DeckLayoutMessage(id="auto-profile", payload=config)
         )
 
     def push_soon(self, delay: float = 0.25) -> None:
@@ -140,6 +174,7 @@ class StateWatcher:
         while True:
             try:
                 await self.check_config_file()
+                await self.check_active_window()
                 await self.push_changes()
             except Exception as exc:
                 logger.warning("watcher: {}", exc)

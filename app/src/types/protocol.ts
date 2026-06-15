@@ -90,6 +90,9 @@ export type Buttons = Button[];
 export type Pages = Page[];
 export type Profiles = Profile[];
 export type AllowShell = boolean;
+export type Match = string;
+export type Profile1 = string;
+export type AutoProfile = AutoProfileRule[];
 export type V6 = number;
 export type Type15 = "hello.ok";
 export type Id9 = string;
@@ -124,6 +127,7 @@ export type Version1 = number;
 export type ActiveProfile2 = string;
 export type Profiles1 = Profile[];
 export type AllowShell1 = boolean;
+export type AutoProfile1 = AutoProfileRule[];
 
 export interface Protocol {
   client: HelloMessage | DeckGetMessage | ActionTriggerMessage | ActionTestMessage | PingMessage | DeckSaveMessage;
@@ -227,6 +231,7 @@ export interface DeckConfig {
   active_profile: ActiveProfile;
   profiles?: Profiles;
   allow_shell?: AllowShell;
+  auto_profile?: AutoProfile;
 }
 export interface Profile {
   id: Id6;
@@ -255,6 +260,10 @@ export interface Button {
 export interface Position {
   col: Col;
   row: Row;
+}
+export interface AutoProfileRule {
+  match: Match;
+  profile: Profile1;
 }
 export interface HelloOkMessage {
   v?: V6;
@@ -321,4 +330,5 @@ export interface DeckConfig1 {
   active_profile: ActiveProfile2;
   profiles?: Profiles1;
   allow_shell?: AllowShell1;
+  auto_profile?: AutoProfile1;
 }

@@ -59,6 +59,8 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 
 **Aparência e layout** (lápis → gerenciador): tema **claro/escuro/automático**, **cor de destaque** e espaçamento — salvos no próprio aparelho; e **grade configurável** por página (colunas × linhas, 1–8 × 1–10), com "Reorganizar botões" para distribuir sem buracos. Os botões preenchem a tela e se reajustam ao girar (retrato/paisagem).
 
+**Perfil automático** (lápis → gerenciador, só em X11): regras "janela contém *X* → ativa o perfil *Y*". O deck troca de perfil sozinho quando você muda de app no PC (ex.: foco no `code` → perfil **Dev**).
+
 ### Instalar como app (tela cheia)
 
 Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Por `http://<ip>:8710` (HTTP) ele trata como site comum e o atalho abre dentro do navegador (com a barra).

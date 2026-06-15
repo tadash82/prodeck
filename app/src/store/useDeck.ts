@@ -122,9 +122,16 @@ function handleMessage(message: ServerMessage): void {
     case "hello.ok":
       socket?.deckGet();
       break;
-    case "deck.layout":
-      setState({ config: message.payload });
+    case "deck.layout": {
+      // perfil trocou (outro dispositivo ou perfil automático): volta à página 1
+      const changedProfile =
+        getState().config?.active_profile !== message.payload.active_profile;
+      setState({
+        config: message.payload,
+        ...(changedProfile ? { activePageIndex: 0 } : {}),
+      });
       break;
+    }
     case "action.result": {
       const { button_id, status, message: detail } = message.payload;
       // Teste do editor: feedback direto (não há botão na tela pra piscar).
