@@ -52,6 +52,14 @@ class ShellAction(StrictModel):
     command: str = Field(min_length=1)
 
 
+class PluginAction(StrictModel):
+    # ação fornecida por um plugin externo (entry point prodeck.actions);
+    # `name` diz qual plugin e `params` são os campos que o usuário preencheu
+    type: Literal["plugin"] = "plugin"
+    name: str = Field(min_length=1)
+    params: dict[str, str] = {}
+
+
 class DelayStep(StrictModel):
     type: Literal["delay"] = "delay"
     ms: int = Field(ge=0, le=30_000)
@@ -81,6 +89,7 @@ Action = Annotated[
     | HotkeyAction
     | TextAction
     | ShellAction
+    | PluginAction
     | MacroAction,
     Field(discriminator="type"),
 ]

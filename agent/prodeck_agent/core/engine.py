@@ -51,6 +51,7 @@ class ActionEngine:
 
 def default_engine() -> ActionEngine:
     from .actions import hotkey, open_app, open_path, open_url, shell, text
+    from .plugins import load_plugins, plugin_executor
 
     engine = ActionEngine()
     engine.register("open_app", open_app.execute)
@@ -59,4 +60,5 @@ def default_engine() -> ActionEngine:
     engine.register("hotkey", hotkey.execute)
     engine.register("text", text.execute)
     engine.register("shell", shell.execute)
+    engine.register("plugin", plugin_executor(load_plugins()))
     return engine

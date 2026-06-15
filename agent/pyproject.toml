@@ -38,6 +38,11 @@ dependencies = [
 [project.scripts]
 prodeck-agent = "prodeck_agent.main:main"
 
+# Ações de plugin: cada entry point aponta para um ActionPlugin. Um pacote
+# externo registra a sua aqui da mesma forma (grupo "prodeck.actions").
+[project.entry-points."prodeck.actions"]
+notify = "prodeck_agent.plugins.notify:plugin"
+
 [project.urls]
 Homepage = "https://github.com/tadash82/prodeck"
 Repository = "https://github.com/tadash82/prodeck"

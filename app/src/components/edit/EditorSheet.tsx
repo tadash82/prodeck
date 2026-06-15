@@ -10,6 +10,7 @@ import { AppPicker, type InstalledApp } from "./AppPicker";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
 import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
+import { PluginEditor, type PluginMeta } from "./PluginEditor";
 import { QuickActions, type QuickAction } from "./QuickActions";
 import { inputClass, labelClass, Sheet } from "./Sheet";
 
@@ -33,6 +34,7 @@ const ACTION_TABS: { type: ActionType; label: string; icon: string }[] = [
   { type: "text", label: "Texto", icon: "mdi:form-textbox" },
   { type: "shell", label: "Shell", icon: "mdi:console-line" },
   { type: "macro", label: "Macro", icon: "mdi:playlist-play" },
+  { type: "plugin", label: "Plugin", icon: "mdi:puzzle-outline" },
 ];
 
 export function EditorSheet({ target }: { target: EditTarget }) {
@@ -58,6 +60,10 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   const [shellCmd, setShellCmd] = useState(action?.type === "shell" ? action.command : "");
   const [macroSteps, setMacroSteps] = useState<StepForm[]>(
     action?.type === "macro" ? action.steps.map(stepToForm) : [],
+  );
+  const [pluginName, setPluginName] = useState(action?.type === "plugin" ? action.name : "");
+  const [pluginParams, setPluginParams] = useState<Record<string, string>>(
+    action?.type === "plugin" ? { ...action.params } : {},
   );
   const [stateSel, setStateSel] = useState<string>(existing?.state ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -102,6 +108,9 @@ export function EditorSheet({ target }: { target: EditTarget }) {
         const built = macroSteps.map(buildStep);
         if (built.some((s) => s === null)) return null;
         return { type: "macro", steps: built as MacroStep[] as [MacroStep, ...MacroStep[]] };
+      }
+      case "plugin": {
+        return pluginName ? { type: "plugin", name: pluginName, params: pluginParams } : null;
       }
       default:
         return null;
@@ -317,6 +326,21 @@ export function EditorSheet({ target }: { target: EditTarget }) {
             <label className={labelClass}>Passos da sequência</label>
             <MacroBuilder steps={macroSteps} onChange={setMacroSteps} />
           </div>
+        )}
+        {actionType === "plugin" && (
+          <PluginEditor
+            name={pluginName}
+            params={pluginParams}
+            onChange={(name, params) => {
+              setPluginName(name);
+              setPluginParams(params);
+            }}
+            onSelect={(meta: PluginMeta) => {
+              setIcon(meta.icon);
+              setColor(meta.color);
+              if (!label.trim()) setLabel(meta.label);
+            }}
+          />
         )}
 
         <IconPicker value={icon} onChange={setIcon} />

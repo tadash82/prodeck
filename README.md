@@ -85,6 +85,31 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - Testes: `cd agent && uv run pytest` · `cd app && npm test`
 - **Publicar no PyPI** (mantenedor): `cd app && npm run build` (se mexeu no front) → `cd agent && uv build && uv publish` (precisa de token PyPI). A PWA já vai embutida no wheel.
 
+## Plugins (estender as ações)
+
+Qualquer pacote Python instalado pode **adicionar tipos de ação** sem tocar no core — basta publicar um entry point no grupo `prodeck.actions` apontando para um `ActionPlugin`:
+
+```python
+from prodeck_agent.core.plugins import ActionPlugin, PluginField
+
+def _run(params: dict[str, str]) -> None:
+    ...  # executa; levanta exceção em falha
+
+plugin = ActionPlugin(
+    name="spotify", label="Spotify", icon="mdi:spotify",
+    fields=(PluginField("query", "Buscar", "Daft Punk"),),
+    run=_run,
+)
+```
+
+```toml
+# pyproject.toml do seu plugin
+[project.entry-points."prodeck.actions"]
+spotify = "prodeck_spotify:plugin"
+```
+
+Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos que você declarou. O agente já acompanha um exemplo (`notify`, notificação de desktop). Detalhes em [docs/03 — Plugins](docs/03-arquitetura.md).
+
 ## Solução de problemas
 
 **O celular não acha o agente / o QR não conecta**

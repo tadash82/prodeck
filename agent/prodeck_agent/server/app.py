@@ -23,6 +23,7 @@ from .. import __version__
 from ..core.apps import list_apps
 from ..core.audio import audio_presets
 from ..core.config import ConfigStore
+from ..core.plugins import load_plugins, plugins_metadata
 from ..core.system import system_presets
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
@@ -176,6 +177,15 @@ def create_app(
         if not secrets.compare_digest(token, store.pair_token()):
             raise HTTPException(status_code=401)
         return JSONResponse(audio_presets() + system_presets())
+
+    @app.get("/plugins")
+    async def plugins_list(token: str = "") -> JSONResponse:
+        """Plugins instalados (entry points prodeck.actions) e seus campos."""
+        if not secrets.compare_digest(token, store.pair_token()):
+            raise HTTPException(status_code=401)
+        if not hasattr(app.state, "plugins_cache"):
+            app.state.plugins_cache = plugins_metadata(load_plugins())
+        return JSONResponse(app.state.plugins_cache)
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")

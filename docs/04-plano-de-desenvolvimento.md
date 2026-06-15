@@ -140,7 +140,7 @@ release `v1.0.0` no GitHub; instalação validada ponta a ponta a partir do PyPI
 
 Em ordem aproximada de valor:
 
-- **Sistema de plugins** em Python (entry points): a comunidade adiciona ações sem tocar no core. É o diferencial estratégico do agente em Python.
+- ✅ **Sistema de plugins** em Python (entry points `prodeck.actions`) — **entregue (2026-06-14)**: pacotes externos adicionam ações sem tocar no core; tipo de ação `plugin` genérico, descoberta via `core/plugins.py`, metadados em `/plugins`, editor renderiza os campos, exemplo `notify`. Ver "Plugins" em `docs/03`.
 - **Suporte a Windows** no agente (`start`, paths, atalhos prontos por SO) e **binário único via PyInstaller** (Linux primeiro) — adiados da Fase 4, sob demanda.
 - **App Flutter** nativo (reusa agente + protocolo) se surgir necessidade real: widgets na home, NFC, Bluetooth.
 - Perfil automático por janela ativa (deck muda quando o VSCode ganha foco — fácil em X11, restrito em Wayland).

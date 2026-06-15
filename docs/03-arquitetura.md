@@ -22,6 +22,7 @@
 │  ├── GET /rootCA.pem  → certificado raiz p/ instalar (com --tls)│
 │  ├── GET /apps        → apps instalados (.desktop) p/ o editor  │
 │  ├── GET /presets     → atalhos prontos detectados (mídia/sist.)│
+│  ├── GET /plugins     → ações de plugins (entry points) + campos│
 │  └── WS  /ws          → protocolo do deck                       │
 │                                                                 │
 │  ┌────────────┐  ┌───────────────┐  ┌───────────────────────┐   │
@@ -30,8 +31,8 @@
 │  │ devices    │  │ (Pydantic)    │  │  executores           │   │
 │  └────────────┘  └───────────────┘  └───────────┬───────────┘   │
 │                                                 │               │
-│ open_app · open_path · open_url · hotkey · text · shell · macro │
-│     (macro = sequência de passos com delays; shell é opt-in)    │
+│ open_app·open_path·open_url·hotkey·text·shell·macro·plugin      │
+│  (macro = passos com delays; shell opt-in; plugin = entry point)│
 │                                                                 │
 │  StateWatcher: estado dos botões (wpctl) a cada 2 s + push      │
 │  pós-trigger + sync de edições à mão no profiles.json (mtime)   │
@@ -66,8 +67,10 @@ ProDeck/
 │       │   ├── apps.py             # lista apps instalados (.desktop) + ícones, p/ o seletor do editor
 │       │   ├── audio.py            # atalhos de mídia (wpctl/pactl) detectados
 │       │   ├── system.py           # comandos de sistema (bloquear/print) detectados
+│       │   ├── plugins.py          # descoberta de plugins (entry points prodeck.actions)
 │       │   ├── tls.py              # CA + certificado local (cryptography), SAN p/ todos os IPs
 │       │   └── net.py              # IPs de todas as interfaces
+│       ├── plugins/                # plugins que acompanham o agente (ex.: notify)
 │       └── static/                 # build da PWA (vite build publica aqui)
 ├── app/                            # PWA (Vite + React + TS + Tailwind + Motion)
 │   ├── tests/                      # vitest (deckOps)
@@ -158,7 +161,7 @@ ProDeck/
 
 Regras:
 
-- **Ações são uma união discriminada** pelo campo `type` (Pydantic `Discriminator`) — tipos atuais: `open_app`, `open_path`, `open_url`, `hotkey`, `text`, `shell` e `macro` (passos das ações básicas + `delay`). Adicionar um tipo novo não quebra os existentes.
+- **Ações são uma união discriminada** pelo campo `type` (Pydantic `Discriminator`) — tipos atuais: `open_app`, `open_path`, `open_url`, `hotkey`, `text`, `shell`, `macro` (passos das ações básicas + `delay`) e `plugin` (ação de pacote externo: `{ name, params }`). Adicionar um tipo novo não quebra os existentes.
 - `command` é **lista de argumentos** (nunca string única) → execução sem shell por padrão, sem injeção. A ação `shell` é a exceção explícita, atrás de `allow_shell` (padrão `false`) e sempre logada.
 - Botões podem ter `"state": "mic_muted" | "audio_muted"` — o agente avalia o provider (wpctl/pactl) e envia `state.update` quando o fato muda no PC.
 - `version` no topo + função de migração simples permitem evoluir o formato sem quebrar configs antigas; toda escrita é atômica e gera `.bak` da versão anterior.
@@ -232,6 +235,37 @@ mesmo app é servido por **dois listeners no mesmo event loop**: HTTP na porta
 (configurar pelo PC, sem aviso de certificado) e HTTPS na porta+1 (PWA em tela
 cheia no celular). Ver nota sobre HTTPS no doc 02.
 
+## Plugins (ações de terceiros)
+
+Qualquer pacote Python instalado adiciona **ações novas** sem tocar no core,
+publicando um entry point no grupo `prodeck.actions` que aponta para um
+`ActionPlugin` (`core/plugins.py`):
+
+```python
+# no pacote do plugin
+from prodeck_agent.core.plugins import ActionPlugin, PluginField
+
+def _run(params: dict[str, str]) -> None:
+    ...  # executa; levanta exceção em falha
+
+plugin = ActionPlugin(
+    name="spotify", label="Spotify", icon="mdi:spotify",
+    fields=(PluginField("query", "Buscar", "Daft Punk"),),
+    run=_run,
+)
+```
+```toml
+# pyproject.toml do plugin
+[project.entry-points."prodeck.actions"]
+spotify = "prodeck_spotify:plugin"
+```
+
+O protocolo **não muda**: existe um único tipo de ação `plugin` com `{ name,
+params }` (ver ADR 14). O agente descobre os plugins (`load_plugins()`), o
+engine despacha pelo `name`, e o editor lista os plugins e renderiza seus campos
+via `GET /plugins`. Um plugin quebrado é ignorado com aviso, sem derrubar o
+agente. O agente já acompanha um exemplo (`prodeck_agent/plugins/notify.py`).
+
 ## Decisões registradas (mini-ADRs)
 
 | # | Decisão | Motivo | Revisitar se… |
@@ -249,3 +283,4 @@ cheia no celular). Ver nota sobre HTTPS no doc 02.
 | 11 | TLS por certificado gerado pela lib `cryptography` (não mkcert) | Zero dependência externa e sem `sudo`; o agente já é Python | Precisar de cadeia de confiança reconhecida pelo SO |
 | 12 | Com `--tls`, HTTP + HTTPS no mesmo event loop (não dois processos) | Broadcast entre dispositivos funciona cross-listener; configurar pelo PC sem aviso de certificado e PWA em tela cheia no celular | — |
 | 13 | Atalhos globais do desktop (bloquear, terminal, mídia) por **comando direto detectado**, não por `hotkey` | A injeção do pynput não dispara o grab global do compositor (só atalhos do app em foco); comando é determinístico. Detecção no agente (`audio.py`/`system.py`), exposta em `/presets` | Backend de input ganhar suporte a `ydotool`/portal |
+| 14 | Plugins por **um único tipo de ação `plugin` genérico** (`{name, params}`), não estendendo a união Pydantic em runtime | Mantém o protocolo fechado e os tipos TS estáveis (gerados em build); o plugin valida os próprios `params` e descreve seus campos via `/plugins` | Precisar de validação forte por plugin no core |
