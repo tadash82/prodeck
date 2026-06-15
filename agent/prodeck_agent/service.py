@@ -6,12 +6,14 @@ from pathlib import Path
 
 UNIT_PATH = Path.home() / ".config/systemd/user/prodeck.service"
 
+# Aspas em {python}: o caminho do interpretador pode conter espaços (ex.: um venv
+# num drive "/media/.../Linux HD2/...") — sem aspas o systemd quebra o ExecStart.
 UNIT_TEMPLATE = """[Unit]
 Description=ProDeck Agent — deck de produtividade no celular
 After=graphical-session.target
 
 [Service]
-ExecStart={python} -m prodeck_agent --no-tray{tls} --port {port}
+ExecStart="{python}" -m prodeck_agent --no-tray{tls} --port {port}
 Restart=on-failure
 RestartSec=3
 
