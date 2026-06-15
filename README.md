@@ -156,4 +156,7 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Distribuição: pacote pronto pro PyPI (`uv tool install prodeck-agent`), PWA embutida
   - [x] Wake Lock nativo (Screen Wake Lock API em HTTPS; NoSleep.js de fallback)
   - [x] Editor: seletor de apps, atalhos prontos (mídia/sistema detectados), "Testar" ação, swipe entre páginas
-- [ ] Fase 5 — Sob demanda: binário único (PyInstaller), suporte a Windows
+- [ ] Fase 5 — Em andamento:
+  - [x] Sistema de plugins (ações por entry points `prodeck.actions`) — v1.1, 2026-06-14
+  - [x] Perfil automático por janela ativa (X11) — v1.1, 2026-06-14
+  - [ ] Binário único (PyInstaller) e suporte a Windows — sob demanda
