@@ -148,7 +148,7 @@ Em ordem aproximada de valor:
 - ✅ **Botões-widget com dados ao vivo** — **entregue (2026-06-15)**: campo `widget` (cpu/ram/disco/relógio/data); o botão exibe o valor e o watcher faz push (`widget.update`) a cada 2 s. `action` virou opcional (botão só-widget). cpu/ram pela camada de plataforma. Falta como ideia futura: widgets de dados externos (agenda, contador de PRs) — caberiam como **plugins**.
 - Integrações: Home Assistant, KDE Connect, espelhar para OBS (aí sim, como plugin).
 - Multi-PC: um celular controla várias máquinas (seletor de agente).
-- Compartilhamento de perfis (exportar/importar JSON; futura "galeria").
+- ✅ **Exportar/importar perfis** (JSON) — **entregue (2026-06-15)**: no gerenciador, ↓ baixa um perfil em JSON; "Importar" soma um perfil ao config com ids novos (sem colisão). Client-side puro (`deckOps.exportProfile`/`importProfiles`), validado no `deck.save`. Futuro: "galeria" de perfis compartilhados.
 
 ---
 

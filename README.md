@@ -61,6 +61,8 @@ Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell
 
 **Perfil automático** (lápis → gerenciador, só em X11): regras "janela contém *X* → ativa o perfil *Y*". O deck troca de perfil sozinho quando você muda de app no PC (ex.: foco no `code` → perfil **Dev**).
 
+**Exportar/importar perfis** (lápis → gerenciador): o **↓** ao lado de cada perfil baixa um JSON; **"Importar perfil"** soma um perfil de um arquivo aos seus (com ids novos). Serve de backup e para levar a config para outro PC.
+
 ### Instalar como app (tela cheia)
 
 Adicionar a PWA à tela inicial abre o deck **sem a barra do navegador**. O Chrome (Android) só oferece **"Instalar app"** em **contexto seguro** — `localhost` ou **HTTPS**. Por `http://<ip>:8710` (HTTP) ele trata como site comum e o atalho abre dentro do navegador (com a barra).
@@ -163,4 +165,5 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Abstração por SO (`core/platform/`) — prepara o Windows
   - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh`
   - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data)
+  - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda

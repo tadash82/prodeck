@@ -4,6 +4,8 @@ import {
   addAutoRule,
   addPage,
   addProfile,
+  exportProfile,
+  importProfiles,
   moveButton,
   removeAutoRule,
   removeButton,
@@ -130,5 +132,30 @@ describe("deckOps", () => {
     let c = addAutoRule(config(), "code", "a");
     c = addAutoRule(c, "firefox", "a");
     expect(removeAutoRule(c, 0).auto_profile).toEqual([{ match: "firefox", profile: "a" }]);
+  });
+
+  it("exportProfile gera o JSON do perfil", () => {
+    const { filename, json } = exportProfile(config(), "a");
+    expect(filename).toBe("prodeck-a.json");
+    const parsed = JSON.parse(json);
+    expect(parsed.name).toBe("A");
+    expect(parsed.pages[0].buttons[0].id).toBe("b1");
+  });
+
+  it("importProfiles soma o perfil com ids novos, preservando o conteúdo", () => {
+    const { json } = exportProfile(config(), "a");
+    const imported = importProfiles(config(), JSON.parse(json));
+    expect(imported.profiles).toHaveLength(2);
+    const novo = imported.profiles![1];
+    expect(novo.id).not.toBe("a");
+    expect(novo.name).toBe("A (importado)"); // nome colide → sufixo
+    const btn = novo.pages![0].buttons![0];
+    expect(btn.id).not.toBe("b1");
+    expect(btn.label).toBe("b1"); // conteúdo do botão preservado
+  });
+
+  it("importProfiles aceita um config inteiro e rejeita lixo", () => {
+    expect(importProfiles(config(), config()).profiles).toHaveLength(2);
+    expect(() => importProfiles(config(), { foo: 1 })).toThrow();
   });
 });

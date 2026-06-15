@@ -1,11 +1,13 @@
 import { Icon } from "@iconify/react";
-import { useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 
 import {
   addAutoRule,
   addPage,
   addProfile,
+  exportProfile,
   GRID_LIMITS,
+  importProfiles,
   removeAutoRule,
   removePage,
   removeProfile,
@@ -28,9 +30,39 @@ export function ManageSheet() {
   const setManageOpen = useDeck((s) => s.setManageOpen);
   const setPage = useDeck((s) => s.setPage);
   const activePageIndex = useDeck((s) => s.activePageIndex);
+  const showToast = useDeck((s) => s.showToast);
 
   const [renaming, setRenaming] = useState<Renaming | null>(null);
   const [armedDelete, setArmedDelete] = useState<string | null>(null);
+  const importRef = useRef<HTMLInputElement>(null);
+
+  const doExport = (profileId: string) => {
+    try {
+      const { filename, json } = exportProfile(config!, profileId);
+      const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Falha ao exportar.");
+    }
+  };
+
+  const onImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    let data: unknown;
+    try {
+      data = JSON.parse(await file.text());
+    } catch {
+      showToast("Arquivo não é um JSON válido.");
+      return;
+    }
+    apply((c) => importProfiles(c, data)); // erros (perfil inválido) viram toast
+  };
 
   if (!config) return null;
   const profiles = config.profiles ?? [];
@@ -75,6 +107,7 @@ export function ManageSheet() {
     isActive: boolean,
     onActivate: (() => void) | null,
     onRemove: () => void,
+    onExport?: () => void,
   ) => {
     const key = `${kind}:${id}`;
     return (
@@ -105,6 +138,7 @@ export function ManageSheet() {
               />
               <span className="truncate">{name}</span>
             </button>
+            {onExport && rowButton(onExport, "mdi:download-outline")}
             {rowButton(() => setRenaming({ kind, id, value: name }), "mdi:pencil")}
             {rowButton(
               () => {
@@ -143,6 +177,7 @@ export function ManageSheet() {
                 setPage(0);
               },
               () => apply((c) => removeProfile(c, profile.id)),
+              () => doExport(profile.id),
             ),
           )}
           <AddRow
@@ -152,6 +187,25 @@ export function ManageSheet() {
               setPage(0);
             }}
           />
+          <button
+            type="button"
+            onClick={() => importRef.current?.click()}
+            className="flex items-center justify-center gap-2 rounded-xl bg-slate-800/70 px-3 py-2 text-sm text-slate-200 active:bg-slate-700"
+          >
+            <Icon icon="mdi:file-upload-outline" style={{ fontSize: "1.1rem" }} />
+            Importar perfil
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={onImportFile}
+          />
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Exportar (↓) salva o perfil num arquivo JSON; importar soma esse perfil aos seus,
+            com nomes/ids novos. Bom para backup ou levar a config para outro PC.
+          </p>
         </section>
 
         <section className="flex flex-col gap-1.5">

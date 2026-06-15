@@ -174,6 +174,58 @@ export function removeAutoRule(config: DeckConfig, index: number): DeckConfig {
   return next;
 }
 
+// ---------------------------------------------------------------- exportar/importar
+
+/** Serializa um perfil para JSON compartilhável (backup ou outro PC). */
+export function exportProfile(config: DeckConfig, profileId: string): {
+  filename: string;
+  json: string;
+} {
+  const profile = (config.profiles ?? []).find((p) => p.id === profileId);
+  if (!profile) throw new Error("perfil não encontrado");
+  const slug = profile.name.replace(/[^\p{L}\p{N}_-]+/gu, "-").toLowerCase() || "perfil";
+  return { filename: `prodeck-${slug}.json`, json: JSON.stringify(profile, null, 2) };
+}
+
+/** Dá ids novos ao perfil (e suas páginas/botões) para não colidir ao importar. */
+function freshenProfile(raw: unknown, takenNames: Set<string>): Profile {
+  const prof = raw as Partial<Profile>;
+  if (!Array.isArray(prof.pages)) throw new Error("Arquivo não parece um perfil do ProDeck.");
+  let name = String(prof.name ?? "Perfil importado");
+  if (takenNames.has(name)) name = `${name} (importado)`;
+  return {
+    id: newId("profile"),
+    name,
+    pages: prof.pages.map((pg) => ({
+      id: newId("page"),
+      name: String((pg as Page).name ?? "Página"),
+      grid: (pg as Page).grid,
+      buttons: ((pg as Page).buttons ?? []).map((b) => ({ ...b, id: newId("btn") })),
+    })),
+  };
+}
+
+/** Importa um perfil (ou os perfis de um config exportado) somando ao atual. */
+export function importProfiles(config: DeckConfig, data: unknown): DeckConfig {
+  const obj = data as { profiles?: unknown[]; pages?: unknown[] };
+  const incoming = Array.isArray(obj?.profiles)
+    ? obj.profiles
+    : Array.isArray(obj?.pages)
+      ? [obj]
+      : null;
+  if (!incoming || incoming.length === 0) {
+    throw new Error("Arquivo não tem nenhum perfil do ProDeck.");
+  }
+  const next = clone(config);
+  const taken = new Set((next.profiles ?? []).map((p) => p.name));
+  for (const raw of incoming) {
+    const fresh = freshenProfile(raw, taken);
+    taken.add(fresh.name);
+    next.profiles = [...(next.profiles ?? []), fresh];
+  }
+  return next;
+}
+
 // ---------------------------------------------------------------- grade
 
 /** Limites de colunas/linhas — espelham os Field(ge/le) do modelo Pydantic. */
