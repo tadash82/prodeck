@@ -19,6 +19,9 @@ cd app && npm test                           # vitest (deckOps)
 # Desenvolvimento da PWA (proxy /ws e /qr → agente na 8710; rode o agente junto)
 cd app && npm run dev
 cd app && npm run build      # tsc --noEmit + vite build → publica em agent/prodeck_agent/static/
+
+# Binário único do agente (Linux, sem Python) — PWA embutida
+bash scripts/build-binary.sh   # PyInstaller → agent/dist-bin/prodeck-agent (buildar a PWA antes)
 ```
 
 ## Fonte única de verdade: Pydantic → TypeScript

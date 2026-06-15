@@ -142,7 +142,7 @@ Em ordem aproximada de valor:
 
 - ✅ **Sistema de plugins** em Python (entry points `prodeck.actions`) — **entregue (2026-06-14)**: pacotes externos adicionam ações sem tocar no core; tipo de ação `plugin` genérico, descoberta via `core/plugins.py`, metadados em `/plugins`, editor renderiza os campos, exemplo `notify`. Ver "Plugins" em `docs/03`.
 - 🔨 **Suporte a Windows** no agente — **camada por-SO pronta (2026-06-14)**: `core/platform/` isola presets, apps, janela ativa, mute e botões iniciais atrás de uma interface; `LinuxPlatform` completo, `WindowsPlatform` best-effort escrito mas **a validar em máquina Windows**. Falta: testar/ajustar o provider Windows (áudio, apps via Menu Iniciar) e empacotar.
-- **Binário único via PyInstaller** (Linux primeiro; Windows depois do provider validado) — sob demanda.
+- ✅ **Binário único via PyInstaller (Linux)** — **entregue (2026-06-14)**: `scripts/build-binary.sh` gera `agent/dist-bin/prodeck-agent` (~37 MB, onefile) com a PWA e os plugins embutidos (`--copy-metadata` leva os entry points). Validado: serve a PWA, WS, `/presets`, `/plugins`. Binário dinâmico (glibc). Windows fica para depois do provider validado.
 - **App Flutter** nativo (reusa agente + protocolo) se surgir necessidade real: widgets na home, NFC, Bluetooth.
 - ✅ **Perfil automático por janela ativa** — **entregue (2026-06-14)**: regras `{match, profile}` em `auto_profile`; o watcher lê a janela em foco (Xlib/X11) e troca o perfil sozinho (`deck.layout` id `auto-profile`). Editável em Perfis e páginas. Restrito a X11.
 - Botões-widget com dados ao vivo (CPU/RAM, agenda, contador de PRs).

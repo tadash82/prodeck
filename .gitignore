@@ -7,6 +7,11 @@ __pycache__/
 node_modules/
 dist/
 
+# PyInstaller (binário)
+/agent/build/
+/agent/dist-bin/
+/agent/*.spec
+
 # IDE / SO
 .vscode/
 .idea/

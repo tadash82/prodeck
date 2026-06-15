@@ -85,6 +85,7 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - Token novo / esquecer dispositivos: `uv run prodeck-agent --reset-pairing`
 - Desenvolvimento da PWA: `cd app && npm run dev` (proxy para o agente na 8710); mudou modelo Pydantic → rode `scripts/gen-types.sh`; `npm run build` publica no agente
 - Testes: `cd agent && uv run pytest` · `cd app && npm test`
+- **Binário único** (Linux, sem Python): `cd app && npm run build` → `bash scripts/build-binary.sh` → `agent/dist-bin/prodeck-agent` (~37 MB, PWA e plugins embutidos). Rode com `./prodeck-agent --tls`. Binário dinâmico (glibc): builde numa distro antiga para maior compatibilidade.
 - **Publicar no PyPI** (mantenedor): `cd app && npm run build` (se mexeu no front) → `cd agent && uv build && uv publish` (precisa de token PyPI). A PWA já vai embutida no wheel.
 
 ## Plugins (estender as ações)
@@ -159,4 +160,6 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
 - [ ] Fase 5 — Em andamento:
   - [x] Sistema de plugins (ações por entry points `prodeck.actions`) — v1.1, 2026-06-14
   - [x] Perfil automático por janela ativa (X11) — v1.1, 2026-06-14
-  - [ ] Binário único (PyInstaller) e suporte a Windows — sob demanda
+  - [x] Abstração por SO (`core/platform/`) — prepara o Windows
+  - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh`
+  - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda
