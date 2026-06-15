@@ -23,6 +23,7 @@ from .. import __version__
 from ..core.apps import list_apps
 from ..core.audio import audio_presets
 from ..core.config import ConfigStore
+from ..core.system import system_presets
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
 from ..core.pairing import Pairing
@@ -169,12 +170,12 @@ def create_app(
             app.state.apps_cache = await asyncio.to_thread(list_apps)
         return JSONResponse(app.state.apps_cache)
 
-    @app.get("/audio")
-    async def audio_list(token: str = "") -> JSONResponse:
-        """Atalhos de mídia (mutar/volume) com o comando do backend detectado."""
+    @app.get("/presets")
+    async def presets_list(token: str = "") -> JSONResponse:
+        """Atalhos prontos (mídia + sistema) já com o comando certo da máquina."""
         if not secrets.compare_digest(token, store.pair_token()):
             raise HTTPException(status_code=401)
-        return JSONResponse(audio_presets())
+        return JSONResponse(audio_presets() + system_presets())
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="pwa")

@@ -8,6 +8,7 @@ from ..core.models import (
     CLIENT_MESSAGE,
     ActionResultMessage,
     ActionResultPayload,
+    ActionTestMessage,
     ActionTriggerMessage,
     DeckGetMessage,
     DeckLayoutMessage,
@@ -165,6 +166,29 @@ async def deck_ws(websocket: WebSocket) -> None:
                     )
                 )
                 # toggles (ex.: mute) mudam o sistema logo após o Popen retornar
+                state.watcher.push_soon()
+
+            elif isinstance(msg, ActionTestMessage):
+                config = state.store.load_config()
+                ok, detail = await state.engine.run(
+                    msg.payload.action, allow_shell=config.allow_shell
+                )
+                logger.info(
+                    "'{}' testou [{}] → {}",
+                    device.name,
+                    msg.payload.action.type,
+                    "ok" if ok else f"erro: {detail}",
+                )
+                await send(
+                    ActionResultMessage(
+                        id=msg.id,
+                        payload=ActionResultPayload(
+                            button_id="__test__",
+                            status="ok" if ok else "error",
+                            message=detail,
+                        ),
+                    )
+                )
                 state.watcher.push_soon()
     except WebSocketDisconnect:
         if device is not None:

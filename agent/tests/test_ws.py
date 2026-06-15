@@ -112,6 +112,29 @@ def test_deck_get_and_action_trigger(tmp_path):
         assert result["payload"]["status"] == "error"
 
 
+def test_action_test_runs_without_saving(tmp_path):
+    executed = []
+    client, store = build_client(tmp_path, executed)
+    with client.websocket_connect("/ws") as ws:
+        ws.send_text(json.dumps(hello(store.pair_token())))
+        ws.receive_text()
+
+        ws.send_text(
+            json.dumps(
+                {
+                    "type": "action.test",
+                    "id": "5",
+                    "payload": {"action": {"type": "open_url", "url": "https://example.com"}},
+                }
+            )
+        )
+        result = json.loads(ws.receive_text())
+        assert result["type"] == "action.result"
+        assert result["payload"]["button_id"] == "__test__"
+        assert result["payload"]["status"] == "ok"
+        assert len(executed) == 1
+
+
 def test_ping_pong_and_invalid_message(tmp_path):
     client, store = build_client(tmp_path, [])
     with client.websocket_connect("/ws") as ws:

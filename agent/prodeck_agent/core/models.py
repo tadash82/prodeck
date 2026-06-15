@@ -202,6 +202,18 @@ class ActionTriggerMessage(StrictModel):
     payload: ActionTriggerPayload
 
 
+class ActionTestPayload(StrictModel):
+    # ação avulsa pra experimentar no editor, sem precisar salvar um botão
+    action: Action
+
+
+class ActionTestMessage(StrictModel):
+    v: int = PROTOCOL_VERSION
+    type: Literal["action.test"] = "action.test"
+    id: str
+    payload: ActionTestPayload
+
+
 class PingMessage(StrictModel):
     v: int = PROTOCOL_VERSION
     type: Literal["ping"] = "ping"
@@ -216,7 +228,12 @@ class DeckSaveMessage(StrictModel):
 
 
 ClientMessage = Annotated[
-    HelloMessage | DeckGetMessage | ActionTriggerMessage | PingMessage | DeckSaveMessage,
+    HelloMessage
+    | DeckGetMessage
+    | ActionTriggerMessage
+    | ActionTestMessage
+    | PingMessage
+    | DeckSaveMessage,
     Field(discriminator="type"),
 ]
 

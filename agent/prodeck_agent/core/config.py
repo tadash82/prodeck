@@ -23,6 +23,7 @@ from .models import (
     Position,
     Profile,
 )
+from .system import lock_command
 
 DEFAULT_DIR = "~/.config/prodeck"
 
@@ -70,7 +71,15 @@ def default_config() -> DeckConfig:
     add("Home", "mdi:folder-home", "#8b5cf6", OpenPathAction(path="~"))
     add("GitHub", "mdi:github", "#64748b", OpenUrlAction(url="https://github.com"))
     add("Terminal", "mdi:console", "#22c55e", HotkeyAction(keys=["ctrl", "alt", "t"]))
-    add("Bloquear", "mdi:lock", "#ef4444", HotkeyAction(keys=["super", "l"]))
+    # bloquear por comando (loginctl/xdg-screensaver) — o atalho global super+l
+    # não dispara via injeção do pynput; cai pro hotkey só se nada for detectado
+    lock = lock_command()
+    add(
+        "Bloquear",
+        "mdi:lock",
+        "#ef4444",
+        OpenAppAction(command=lock) if lock else HotkeyAction(keys=["super", "l"]),
+    )
     if shutil.which("wpctl"):
         mute_cmd = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"]
     elif shutil.which("pactl"):

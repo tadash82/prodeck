@@ -10,8 +10,18 @@ import { AppPicker, type InstalledApp } from "./AppPicker";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
 import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
-import { MediaPresets, type MediaPreset } from "./MediaPresets";
+import { QuickActions, type QuickAction } from "./QuickActions";
 import { inputClass, labelClass, Sheet } from "./Sheet";
+
+/** Atalhos globais do desktop (bloquear, abrir terminal, print) costumam não
+ * disparar por injeção de tecla — o compositor os captura por keycode. */
+function looksGlobalHotkey(keys: string[]): boolean {
+  const k = keys.map((s) => s.trim().toLowerCase());
+  if (k.some((x) => ["super", "meta", "win", "cmd"].includes(x))) return true;
+  if (k.some((x) => ["print", "printscreen", "print_screen", "prtsc"].includes(x))) return true;
+  // ctrl+alt+<letra> é padrão de atalho de ambiente (ex.: terminal)
+  return k.includes("ctrl") && k.includes("alt") && k.some((x) => x.length === 1);
+}
 
 type ActionType = Action["type"];
 
@@ -28,6 +38,7 @@ const ACTION_TABS: { type: ActionType; label: string; icon: string }[] = [
 export function EditorSheet({ target }: { target: EditTarget }) {
   const apply = useDeck((s) => s.apply);
   const closeEditor = useDeck((s) => s.closeEditor);
+  const testAction = useDeck((s) => s.testAction);
 
   const existing = target.kind === "edit" ? target.button : null;
   const action = existing?.action ?? null;
@@ -108,13 +119,14 @@ export function EditorSheet({ target }: { target: EditTarget }) {
     setAppPickerOpen(false);
   };
 
-  const pickPreset = (preset: MediaPreset) => {
-    setProgram(preset.command[0] ?? "");
-    setArgs(preset.command.slice(1).join("\n"));
-    setIcon(preset.icon);
-    setColor(preset.color);
-    setStateSel(preset.state ?? "");
-    if (!label.trim()) setLabel(preset.label);
+  const pickQuick = (quick: QuickAction) => {
+    setActionType("open_app");
+    setProgram(quick.command[0] ?? "");
+    setArgs(quick.command.slice(1).join("\n"));
+    setIcon(quick.icon);
+    setColor(quick.color);
+    setStateSel(quick.state ?? "");
+    if (!label.trim()) setLabel(quick.label);
   };
 
   const save = () => {
@@ -171,6 +183,8 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           </div>
         </div>
 
+        <QuickActions onPick={pickQuick} />
+
         <div>
           <label className={labelClass}>Ação</label>
           <div className="grid grid-cols-4 gap-1.5">
@@ -202,7 +216,6 @@ export function EditorSheet({ target }: { target: EditTarget }) {
               <Icon icon="mdi:apps" style={{ fontSize: "1.2rem" }} />
               Escolher app instalado
             </button>
-            <MediaPresets onPick={pickPreset} />
             <div>
               <label className={labelClass}>Programa</label>
               <input
@@ -261,8 +274,16 @@ export function EditorSheet({ target }: { target: EditTarget }) {
               placeholder="ctrl+alt+t"
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              Modificadores: ctrl, alt, shift, super. Ex.: super+l, ctrl+shift+m, f5
+              Modificadores: ctrl, alt, shift, super. Ex.: ctrl+shift+m, f5
             </p>
+            {keys.trim() !== "" &&
+              looksGlobalHotkey(keys.split("+").map((s) => s.trim())) && (
+                <p className="mt-1 text-[11px] text-amber-400">
+                  Parece um atalho global do desktop (bloquear, terminal, print). Esses
+                  costumam não funcionar por aqui — use os <b>Atalhos prontos</b> no topo ou
+                  a ação <b>Programa</b>.
+                </p>
+              )}
           </div>
         )}
         {actionType === "text" && (
@@ -332,6 +353,16 @@ export function EditorSheet({ target }: { target: EditTarget }) {
             </button>
           )}
           <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => builtAction && testAction(builtAction)}
+            disabled={!builtAction}
+            title="Executa a ação agora no PC, sem salvar"
+            className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-slate-200 active:bg-slate-700 disabled:opacity-40"
+          >
+            <Icon icon="mdi:play" style={{ fontSize: "1.1rem" }} />
+            Testar
+          </button>
           <button
             type="button"
             onClick={closeEditor}

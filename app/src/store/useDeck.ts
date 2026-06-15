@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 import { captureToken, deviceId, deviceName } from "../lib/identity";
-import type { Button, DeckConfig, Position } from "../types/protocol";
+import type { Action, Button, DeckConfig, Position } from "../types/protocol";
 import { DeckSocket, type ConnStatus, type ServerMessage } from "../ws/client";
 
 export type ButtonResult = {
@@ -32,6 +32,7 @@ type DeckState = {
 
   start: () => void;
   trigger: (buttonId: string) => void;
+  testAction: (action: Action) => void;
   setPage: (index: number) => void;
   setEditMode: (on: boolean) => void;
   openEditor: (target: EditTarget) => void;
@@ -82,6 +83,11 @@ export const useDeck = create<DeckState>((set, get) => ({
     socket?.trigger(buttonId);
   },
 
+  testAction: (action) => {
+    navigator.vibrate?.(10);
+    socket?.testAction(action);
+  },
+
   setPage: (activePageIndex) => set({ activePageIndex }),
   setEditMode: (editMode) =>
     set({ editMode, ...(editMode ? {} : { editTarget: null, manageOpen: false }) }),
@@ -119,18 +125,24 @@ function handleMessage(message: ServerMessage): void {
     case "deck.layout":
       setState({ config: message.payload });
       break;
-    case "action.result":
+    case "action.result": {
+      const { button_id, status, message: detail } = message.payload;
+      // Teste do editor: feedback direto (não há botão na tela pra piscar).
+      if (button_id === "__test__") {
+        getState().showToast(status === "ok" ? "Funcionou ✓" : detail || "Falhou", status);
+        break;
+      }
       setState({
         results: {
           ...getState().results,
-          [message.payload.button_id]: {
-            status: message.payload.status,
-            message: message.payload.message ?? "",
-            at: Date.now(),
-          },
+          [button_id]: { status, message: detail ?? "", at: Date.now() },
         },
       });
+      // Em ação real, o botão pisca vermelho; o motivo (ex.: "programa não
+      // encontrado") só era visível no hover — no celular, mostra no toast.
+      if (status === "error") getState().showToast(detail || "Ação falhou", "error");
       break;
+    }
     case "state.update":
       setState({
         buttonStates: {

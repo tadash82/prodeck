@@ -2,8 +2,8 @@
 da máquina — PipeWire (`wpctl`) ou PulseAudio (`pactl`).
 
 O front não consegue detectar binários; então o agente monta os comandos e os
-expõe (via `/audio`) pro editor oferecer botões prontos sem o usuário adivinhar
-qual ferramenta usar. Mesma detecção do `state.py` (que lê o estado de mute).
+expõe (via `/presets`, junto com `system.py`) pro editor oferecer botões prontos
+sem o usuário adivinhar a ferramenta. Mesma detecção do `state.py` (lê o mute).
 """
 
 import shutil

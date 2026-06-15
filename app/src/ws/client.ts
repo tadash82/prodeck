@@ -1,4 +1,4 @@
-import type { DeckConfig, Protocol } from "../types/protocol";
+import type { Action, DeckConfig, Protocol } from "../types/protocol";
 
 export type ClientMessage = Protocol["client"];
 export type ServerMessage = Protocol["server"];
@@ -99,6 +99,10 @@ export class DeckSocket {
       id: this.nextId(),
       payload: { button_id: buttonId },
     });
+  }
+
+  testAction(action: Action): void {
+    this.dispatch({ v: 1, type: "action.test", id: this.nextId(), payload: { action } });
   }
 
   deckSave(config: DeckConfig): void {
