@@ -121,10 +121,11 @@ Sem digitar token nem topar avisos de "conexão não segura". O certificado fica
 - [x] Fase 1 — MVP: 4 ações, pareamento por token, grid React — 2026-06-11
 - [x] Fase 2 — Editor de botões no celular, perfis/páginas, sincronização — 2026-06-11
 - [x] Fase 3 — Macros, shell/texto, botões com estado, autostart (+ sync de edições à mão) — 2026-06-11
-- [ ] Fase 4 — Polimento e distribuição (v1.0):
+- [x] Fase 4 — Polimento e distribuição (v1.0) — 2026-06-14:
   - [x] Nome definitivo (ProDeck), LICENSE MIT e guia de solução de problemas
   - [x] Temas (claro/escuro/auto), cor de destaque e grade (colunas × linhas) configurável
   - [x] TLS opcional (`--tls`, certificado local) → instalação da PWA em tela cheia
-  - [x] Distribuição: pacote pronto pro PyPI (`uv tool install prodeck-agent`), PWA embutida — falta só `uv publish`
+  - [x] Distribuição: pacote pronto pro PyPI (`uv tool install prodeck-agent`), PWA embutida
   - [x] Wake Lock nativo (Screen Wake Lock API em HTTPS; NoSleep.js de fallback)
-  - [ ] Binário único (PyInstaller) e suporte a Windows — sob demanda
+  - [x] Editor: seletor de apps, atalhos prontos (mídia/sistema detectados), "Testar" ação, swipe entre páginas
+- [ ] Fase 5 — Sob demanda: binário único (PyInstaller), suporte a Windows

@@ -1,6 +1,6 @@
 [project]
 name = "prodeck-agent"
-version = "0.1.0"
+version = "1.0.0"
 description = "ProDeck — agente que executa ações no PC a partir do deck no celular"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,7 +17,7 @@ keywords = [
     "websocket",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",
