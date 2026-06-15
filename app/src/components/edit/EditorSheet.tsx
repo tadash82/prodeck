@@ -66,6 +66,7 @@ export function EditorSheet({ target }: { target: EditTarget }) {
     action?.type === "plugin" ? { ...action.params } : {},
   );
   const [stateSel, setStateSel] = useState<string>(existing?.state ?? "");
+  const [widgetSel, setWidgetSel] = useState<string>(existing?.widget ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   function buildAction(): Action | null {
@@ -118,7 +119,8 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   }
 
   const builtAction = buildAction();
-  const valid = label.trim().length > 0 && builtAction !== null;
+  // botão válido se tiver nome e (uma ação OU um widget — pode ser só-widget)
+  const valid = label.trim().length > 0 && (builtAction !== null || widgetSel !== "");
 
   const pickApp = (app: InstalledApp) => {
     setProgram(app.exec[0] ?? "");
@@ -139,7 +141,7 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   };
 
   const save = () => {
-    if (!builtAction) return;
+    if (!valid) return;
     const button: Button = {
       id: existing?.id ?? newId("btn"),
       position:
@@ -147,8 +149,9 @@ export function EditorSheet({ target }: { target: EditTarget }) {
       label: label.trim(),
       icon,
       color,
-      action: builtAction,
+      action: builtAction ?? undefined, // só-widget: sem ação
       state: stateSel === "" ? null : (stateSel as Button["state"]),
+      widget: widgetSel === "" ? null : (widgetSel as Button["widget"]),
     };
     if (apply((c) => upsertButton(c, target.profileId, target.pageId, button))) {
       closeEditor();
@@ -359,6 +362,27 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           </select>
           <p className="mt-1 text-[11px] text-slate-500">
             O botão acende quando o estado estiver ativo no PC.
+          </p>
+        </div>
+
+        <div>
+          <label className={labelClass}>Widget — dado ao vivo (opcional)</label>
+          <select
+            className={inputClass}
+            value={widgetSel}
+            onChange={(e) => setWidgetSel(e.target.value)}
+          >
+            <option value="">Nenhum</option>
+            <option value="clock">Relógio (hora)</option>
+            <option value="date">Data</option>
+            <option value="datetime">Data e hora</option>
+            <option value="cpu">CPU (uso %)</option>
+            <option value="ram">RAM (uso)</option>
+            <option value="disk">Disco (uso %)</option>
+          </select>
+          <p className="mt-1 text-[11px] text-slate-500">
+            O botão mostra o valor atualizado ao vivo. Pode ser só widget (sem ação) ou ter
+            uma ação ao tocar (ex.: CPU que abre o monitor do sistema).
           </p>
         </div>
 

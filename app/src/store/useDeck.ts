@@ -25,6 +25,7 @@ type DeckState = {
   rttMs: number | null;
   results: Record<string, ButtonResult>;
   buttonStates: Record<string, boolean>;
+  widgetValues: Record<string, string>;
   editMode: boolean;
   editTarget: EditTarget | null;
   manageOpen: boolean;
@@ -53,6 +54,7 @@ export const useDeck = create<DeckState>((set, get) => ({
   rttMs: null,
   results: {},
   buttonStates: {},
+  widgetValues: {},
   editMode: false,
   editTarget: null,
   manageOpen: false,
@@ -155,6 +157,14 @@ function handleMessage(message: ServerMessage): void {
         buttonStates: {
           ...getState().buttonStates,
           [message.payload.button_id]: message.payload.active,
+        },
+      });
+      break;
+    case "widget.update":
+      setState({
+        widgetValues: {
+          ...getState().widgetValues,
+          [message.payload.button_id]: message.payload.value,
         },
       });
       break;

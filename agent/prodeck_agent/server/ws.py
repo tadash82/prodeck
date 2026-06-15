@@ -127,6 +127,8 @@ async def deck_ws(websocket: WebSocket) -> None:
                 await send(DeckLayoutMessage(id=msg.id, payload=state.store.load_config()))
                 for update in state.watcher.snapshot():
                     await send(update)
+                for update in state.watcher.widget_snapshot():
+                    await send(update)
 
             elif isinstance(msg, DeckSaveMessage):
                 state.store.save_config(msg.payload)
@@ -144,6 +146,8 @@ async def deck_ws(websocket: WebSocket) -> None:
                 button = config.find_button(button_id)
                 if button is None:
                     ok, detail = False, f"botão não encontrado: {button_id}"
+                elif button.action is None:
+                    ok, detail = True, ""  # botão só-widget: nada a executar
                 else:
                     ok, detail = await state.engine.run(
                         button.action, allow_shell=config.allow_shell

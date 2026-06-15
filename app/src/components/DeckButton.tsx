@@ -30,6 +30,7 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
   const openEditor = useDeck((s) => s.openEditor);
   const result = useDeck((s) => s.results[button.id]);
   const active = useDeck((s) => s.buttonStates[button.id] ?? false);
+  const widgetValue = useDeck((s) => s.widgetValues[button.id]);
   const [flash, setFlash] = useState<ButtonResult | null>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
   const onClick = () => {
     if (longPress.firedRecently() || Date.now() - lastDragEndAt < 200) return;
     if (editMode) edit();
-    else trigger(button.id);
+    else if (button.action) trigger(button.id); // botão só-widget não dispara nada
   };
 
   return (
@@ -94,10 +95,28 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
       }}
       {...(editMode ? { ...attributes, ...listeners } : longPress.handlers)}
     >
-      <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="2.1rem" />
-      <span className="px-1 text-center text-[11px] leading-tight font-semibold text-white/90">
-        {button.label}
-      </span>
+      {button.widget ? (
+        <>
+          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="1.4rem" />
+          <span
+            className={`font-bold leading-none tabular-nums ${
+              (widgetValue ?? "").length <= 6 ? "text-xl" : "text-sm"
+            }`}
+          >
+            {widgetValue ?? "…"}
+          </span>
+          <span className="px-1 text-center text-[10px] leading-tight text-white/75">
+            {button.label}
+          </span>
+        </>
+      ) : (
+        <>
+          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="2.1rem" />
+          <span className="px-1 text-center text-[11px] leading-tight font-semibold text-white/90">
+            {button.label}
+          </span>
+        </>
+      )}
       {editMode && (
         <span className="absolute top-1.5 right-1.5 rounded-full bg-black/30 p-1">
           <Icon icon="mdi:pencil" style={{ fontSize: "0.75rem" }} />

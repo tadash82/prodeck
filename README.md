@@ -55,7 +55,7 @@ No celular (mesma rede do PC): abra `http://localhost:8710/qr` no PC e escaneie 
 2. **Pelo navegador do PC**: abra `http://localhost:8710/qr` e clique em **"Abrir o deck aqui"** — a mesma PWA roda no desktop, sem precisar copiar token.
 3. **No editor de código**: salve `~/.config/prodeck/profiles.json` — o agente detecta e replica em até 2 s.
 
-Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado). Deslize para a esquerda/direita troca de página.
+Tipos de ação: programa, pasta, URL, atalho de teclado, texto (snippet), shell (opt-in: "Permitir ações shell" no gerenciador) e macro (sequência com esperas). Botões podem refletir estado real do PC (mic/áudio mutado) ou virar **widgets ao vivo** (CPU, RAM, disco, relógio, data) — com ou sem ação ao tocar. Deslize para a esquerda/direita troca de página.
 
 **Aparência e layout** (lápis → gerenciador): tema **claro/escuro/automático**, **cor de destaque** e espaçamento — salvos no próprio aparelho; e **grade configurável** por página (colunas × linhas, 1–8 × 1–10), com "Reorganizar botões" para distribuir sem buracos. Os botões preenchem a tela e se reajustam ao girar (retrato/paisagem).
 
@@ -162,4 +162,5 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Perfil automático por janela ativa (X11) — v1.1, 2026-06-14
   - [x] Abstração por SO (`core/platform/`) — prepara o Windows
   - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh`
+  - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data)
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda

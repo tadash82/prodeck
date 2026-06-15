@@ -77,15 +77,19 @@ export type Label = string;
 export type Icon = string;
 export type Color = string;
 export type Action1 =
-  | OpenAppAction
-  | OpenPathAction
-  | OpenUrlAction
-  | HotkeyAction
-  | TextAction
-  | ShellAction
-  | PluginAction
-  | MacroAction;
+  | (
+      | OpenAppAction
+      | OpenPathAction
+      | OpenUrlAction
+      | HotkeyAction
+      | TextAction
+      | ShellAction
+      | PluginAction
+      | MacroAction
+    )
+  | null;
 export type State = ("mic_muted" | "audio_muted") | null;
+export type Widget = ("clock" | "date" | "datetime" | "cpu" | "ram" | "disk") | null;
 export type Buttons = Button[];
 export type Pages = Page[];
 export type Profiles = Profile[];
@@ -117,11 +121,16 @@ export type Id13 = string;
 export type ButtonId2 = string;
 export type Active = boolean;
 export type V11 = number;
-export type Type20 = "pong";
+export type Type20 = "widget.update";
 export type Id14 = string;
+export type ButtonId3 = string;
+export type Value = string;
 export type V12 = number;
-export type Type21 = "error";
-export type Id15 = string | null;
+export type Type21 = "pong";
+export type Id15 = string;
+export type V13 = number;
+export type Type22 = "error";
+export type Id16 = string | null;
 export type Message1 = string;
 export type Version1 = number;
 export type ActiveProfile2 = string;
@@ -137,6 +146,7 @@ export interface Protocol {
     | DeckLayoutMessage
     | ActionResultMessage
     | StateUpdateMessage
+    | WidgetUpdateMessage
     | PongMessage
     | ErrorMessage;
   config: DeckConfig1;
@@ -254,8 +264,9 @@ export interface Button {
   label: Label;
   icon?: Icon;
   color?: Color;
-  action: Action1;
+  action?: Action1;
   state?: State;
+  widget?: Widget;
 }
 export interface Position {
   col: Col;
@@ -311,15 +322,25 @@ export interface StateUpdatePayload {
   button_id: ButtonId2;
   active: Active;
 }
-export interface PongMessage {
+export interface WidgetUpdateMessage {
   v?: V11;
   type?: Type20;
   id: Id14;
+  payload: WidgetUpdatePayload;
 }
-export interface ErrorMessage {
+export interface WidgetUpdatePayload {
+  button_id: ButtonId3;
+  value: Value;
+}
+export interface PongMessage {
   v?: V12;
   type?: Type21;
-  id?: Id15;
+  id: Id15;
+}
+export interface ErrorMessage {
+  v?: V13;
+  type?: Type22;
+  id?: Id16;
   payload: ErrorPayload;
 }
 export interface ErrorPayload {

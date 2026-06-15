@@ -36,7 +36,7 @@
 │                                                                 │
 │  StateWatcher (loop 2 s): estado dos botões (wpctl) + push      │
 │  pós-trigger + sync de edições à mão (mtime) + perfil automático│
-│  por janela ativa (X11)                                         │
+│  por janela ativa (X11) + valor dos botões-widget (cpu/ram/…)   │
 │  pystray (bandeja, best-effort) · loguru (log) · qrcode         │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -73,6 +73,7 @@ ProDeck/
 │       │   ├── audio.py            # [linux] atalhos de mídia (wpctl/pactl)
 │       │   ├── system.py           # [linux] comandos de sistema (bloquear/print)
 │       │   ├── window.py           # [linux] janela ativa (Xlib) + match de regras (puro)
+│       │   ├── widgets.py          # valor ao vivo dos botões-widget (cpu/ram/relógio…)
 │       │   ├── plugins.py          # descoberta de plugins (entry points prodeck.actions)
 │       │   ├── tls.py              # CA + certificado local (cryptography), SAN p/ todos os IPs
 │       │   └── net.py              # IPs de todas as interfaces
@@ -183,6 +184,7 @@ Regras:
 - **Ações são uma união discriminada** pelo campo `type` (Pydantic `Discriminator`) — tipos atuais: `open_app`, `open_path`, `open_url`, `hotkey`, `text`, `shell`, `macro` (passos das ações básicas + `delay`) e `plugin` (ação de pacote externo: `{ name, params }`). Adicionar um tipo novo não quebra os existentes.
 - `command` é **lista de argumentos** (nunca string única) → execução sem shell por padrão, sem injeção. A ação `shell` é a exceção explícita, atrás de `allow_shell` (padrão `false`) e sempre logada.
 - Botões podem ter `"state": "mic_muted" | "audio_muted"` — o agente avalia o provider (wpctl/pactl) e envia `state.update` quando o fato muda no PC.
+- Botões podem ter `"widget": "clock"|"date"|"datetime"|"cpu"|"ram"|"disk"` — o botão **exibe o valor ao vivo** (`widget.update`, polling de 2 s). `action` é **opcional**: um botão pode ser só-widget (sem ação ao tocar) ou widget + ação. Os valores de sistema (cpu/ram) passam pela camada de plataforma; relógio/data são da stdlib.
 - `auto_profile` (opcional, padrão `[]`) é uma lista de regras `{ match, profile }`: quando a **janela em foco** no PC casa (`match` é substring na classe/título), o agente ativa aquele perfil e propaga `deck.layout` com `id: "auto-profile"`. Só age na *mudança* de janela (não briga com a troca manual) e só em X11. Sem regras, o recurso fica inerte.
 - `version` no topo + função de migração simples permitem evoluir o formato sem quebrar configs antigas; toda escrita é atômica e gera `.bak` da versão anterior.
 - A PWA recebe esse modelo já resolvido via WS (`deck.layout`) — o celular não lê arquivo nenhum. O arquivo, porém, pode ser editado à mão no PC: o watcher detecta pelo mtime e propaga a todos os dispositivos.
@@ -207,6 +209,7 @@ Envelope único nos dois sentidos:
 | S → C | `action.result` | `{ button_id, status: "ok"\|"error", message? }` | Resultado da execução (feedback visual; teste responde com `button_id: "__test__"`) |
 | C → S | `deck.save` | config completa | Edição pelo app/navegador; resposta é `deck.layout` |
 | S → C | `state.update` | `{ button_id, active }` | Botões com estado (mute etc.): snapshot no `deck.get`, push pós-trigger e polling de 2 s |
+| S → C | `widget.update` | `{ button_id, value }` | Botões-widget (cpu/ram/relógio…): snapshot no `deck.get` e push a cada 2 s quando o valor muda |
 | S → C | `error` | `{ message }` | Mensagem/config inválida — erros de validação resumidos de forma amigável |
 
 Pushes sem requisição: além das respostas, o cliente recebe `deck.layout` com

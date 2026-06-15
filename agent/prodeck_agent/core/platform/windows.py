@@ -79,6 +79,12 @@ class WindowsPlatform:
     def is_muted(self, kind: str) -> bool:
         return False  # TODO(windows): CoreAudio (sem dependência nova) ou nircmd
 
+    def cpu_percent(self) -> float | None:
+        return None  # TODO(windows): GetSystemTimes via ctypes
+
+    def mem_info(self) -> tuple[float, float] | None:
+        return None  # TODO(windows): GlobalMemoryStatusEx via ctypes
+
     def starter_buttons(self) -> list[dict]:
         term = "wt" if shutil.which("wt") else "cmd"
         return [

@@ -37,6 +37,14 @@ class Platform(Protocol):
         cada um `{label, icon, color, action, state}` com `action` como dict."""
         ...
 
+    def cpu_percent(self) -> float | None:
+        """Uso de CPU em % (0–100) desde a última chamada, ou None se indisponível."""
+        ...
+
+    def mem_info(self) -> tuple[float, float] | None:
+        """`(usado_GB, total_GB)` de RAM, ou None se indisponível."""
+        ...
+
 
 _current: Platform | None = None
 

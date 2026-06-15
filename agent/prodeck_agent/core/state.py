@@ -11,8 +11,15 @@ import asyncio
 
 from loguru import logger
 
-from .models import DeckLayoutMessage, StateUpdateMessage, StateUpdatePayload
+from .models import (
+    DeckLayoutMessage,
+    StateUpdateMessage,
+    StateUpdatePayload,
+    WidgetUpdateMessage,
+    WidgetUpdatePayload,
+)
 from .platform import current
+from .widgets import widget_value
 from .window import match_profile
 
 # provider do botão → "lado" do áudio que o SO consulta
@@ -31,6 +38,7 @@ class StateWatcher:
         self.store = store
         self.connections = connections
         self._last: dict[str, bool] = {}
+        self._last_widget: dict[str, str] = {}
         self._config_mtime = store.mtime()
         self._last_window: tuple[str, str] | None = None
         # refs fortes: create_task sem ref pode ser coletado no meio do sleep
@@ -137,12 +145,47 @@ class StateWatcher:
                 )
             )
 
+    # ------------------------------------------------- widgets (dado ao vivo)
+
+    def _widget_buttons(self):
+        for profile in self.store.load_config().profiles:
+            for page in profile.pages:
+                for button in page.buttons:
+                    if button.widget is not None:
+                        yield button
+
+    def widget_snapshot(self) -> list[WidgetUpdateMessage]:
+        """Valor atual de cada botão-widget — para clientes recém-conectados."""
+        messages = []
+        for button in self._widget_buttons():
+            value = widget_value(button.widget)
+            self._last_widget[button.id] = value
+            messages.append(
+                WidgetUpdateMessage(
+                    id="widget", payload=WidgetUpdatePayload(button_id=button.id, value=value)
+                )
+            )
+        return messages
+
+    async def push_widget_changes(self) -> None:
+        for button in self._widget_buttons():
+            value = widget_value(button.widget)
+            if self._last_widget.get(button.id) == value:
+                continue
+            self._last_widget[button.id] = value
+            await self.connections.broadcast(
+                WidgetUpdateMessage(
+                    id="widget", payload=WidgetUpdatePayload(button_id=button.id, value=value)
+                )
+            )
+
     async def run(self) -> None:
         while True:
             try:
                 await self.check_config_file()
                 await self.check_active_window()
                 await self.push_changes()
+                await self.push_widget_changes()
             except Exception as exc:
                 logger.warning("watcher: {}", exc)
             await asyncio.sleep(self.POLL_SECONDS)

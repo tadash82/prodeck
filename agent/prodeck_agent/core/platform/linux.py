@@ -48,8 +48,49 @@ def _is_muted(kind: str) -> bool:
     return False
 
 
+_cpu_last: tuple[int, int] | None = None  # (total, idle) da última leitura
+
+
+def _cpu_percent() -> float | None:
+    """% de CPU pelo delta de /proc/stat entre chamadas (1ª devolve 0)."""
+    global _cpu_last
+    with open("/proc/stat") as f:
+        vals = [int(x) for x in f.readline().split()[1:]]
+    idle = vals[3] + vals[4]  # idle + iowait
+    total = sum(vals)
+    prev = _cpu_last
+    _cpu_last = (total, idle)
+    if prev is None:
+        return 0.0
+    dt, di = total - prev[0], idle - prev[1]
+    return round(100 * (dt - di) / dt, 1) if dt > 0 else 0.0
+
+
+def _mem_info() -> tuple[float, float]:
+    info: dict[str, int] = {}
+    with open("/proc/meminfo") as f:
+        for line in f:
+            key, value, *_ = line.split()
+            info[key.rstrip(":")] = int(value)  # em kB
+    total = info["MemTotal"] / 1048576  # kB → GB
+    avail = info.get("MemAvailable", info.get("MemFree", 0)) / 1048576
+    return (round(total - avail, 1), round(total, 1))
+
+
 class LinuxPlatform:
     name = "linux"
+
+    def cpu_percent(self) -> float | None:
+        try:
+            return _cpu_percent()
+        except Exception:
+            return None
+
+    def mem_info(self) -> tuple[float, float] | None:
+        try:
+            return _mem_info()
+        except Exception:
+            return None
 
     def presets(self) -> list[dict]:
         return audio_presets() + system_presets()

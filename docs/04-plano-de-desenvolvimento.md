@@ -145,7 +145,7 @@ Em ordem aproximada de valor:
 - ✅ **Binário único via PyInstaller (Linux)** — **entregue (2026-06-14)**: `scripts/build-binary.sh` gera `agent/dist-bin/prodeck-agent` (~37 MB, onefile) com a PWA e os plugins embutidos (`--copy-metadata` leva os entry points). Validado: serve a PWA, WS, `/presets`, `/plugins`. Binário dinâmico (glibc). Windows fica para depois do provider validado.
 - **App Flutter** nativo (reusa agente + protocolo) se surgir necessidade real: widgets na home, NFC, Bluetooth.
 - ✅ **Perfil automático por janela ativa** — **entregue (2026-06-14)**: regras `{match, profile}` em `auto_profile`; o watcher lê a janela em foco (Xlib/X11) e troca o perfil sozinho (`deck.layout` id `auto-profile`). Editável em Perfis e páginas. Restrito a X11.
-- Botões-widget com dados ao vivo (CPU/RAM, agenda, contador de PRs).
+- ✅ **Botões-widget com dados ao vivo** — **entregue (2026-06-15)**: campo `widget` (cpu/ram/disco/relógio/data); o botão exibe o valor e o watcher faz push (`widget.update`) a cada 2 s. `action` virou opcional (botão só-widget). cpu/ram pela camada de plataforma. Falta como ideia futura: widgets de dados externos (agenda, contador de PRs) — caberiam como **plugins**.
 - Integrações: Home Assistant, KDE Connect, espelhar para OBS (aí sim, como plugin).
 - Multi-PC: um celular controla várias máquinas (seletor de agente).
 - Compartilhamento de perfis (exportar/importar JSON; futura "galeria").

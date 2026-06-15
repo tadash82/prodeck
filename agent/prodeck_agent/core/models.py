@@ -108,6 +108,7 @@ class Grid(StrictModel):
 
 
 StateProvider = Literal["mic_muted", "audio_muted"]
+WidgetKind = Literal["clock", "date", "datetime", "cpu", "ram", "disk"]
 
 
 class Button(StrictModel):
@@ -116,8 +117,11 @@ class Button(StrictModel):
     label: str
     icon: str = "mdi:gesture-tap-button"
     color: str = "#3b82f6"
-    action: Action
+    # ação ao tocar — opcional: um botão-widget pode só mostrar dado ao vivo
+    action: Action | None = None
     state: StateProvider | None = None
+    # dado ao vivo exibido no botão (CPU, RAM, relógio…), atualizado pelo agente
+    widget: WidgetKind | None = None
 
 
 class Page(StrictModel):
@@ -320,6 +324,18 @@ class StateUpdateMessage(StrictModel):
     payload: StateUpdatePayload
 
 
+class WidgetUpdatePayload(StrictModel):
+    button_id: str
+    value: str
+
+
+class WidgetUpdateMessage(StrictModel):
+    v: int = PROTOCOL_VERSION
+    type: Literal["widget.update"] = "widget.update"
+    id: str
+    payload: WidgetUpdatePayload
+
+
 class ErrorPayload(StrictModel):
     message: str
 
@@ -337,6 +353,7 @@ ServerMessage = Annotated[
     | DeckLayoutMessage
     | ActionResultMessage
     | StateUpdateMessage
+    | WidgetUpdateMessage
     | PongMessage
     | ErrorMessage,
     Field(discriminator="type"),
