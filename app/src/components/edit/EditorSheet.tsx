@@ -10,6 +10,7 @@ import { AppPicker, type InstalledApp } from "./AppPicker";
 import { ColorPicker } from "./ColorPicker";
 import { IconPicker } from "./IconPicker";
 import { MacroBuilder, buildStep, stepToForm, type MacroStep, type StepForm } from "./MacroBuilder";
+import { MediaPresets, type MediaPreset } from "./MediaPresets";
 import { inputClass, labelClass, Sheet } from "./Sheet";
 
 type ActionType = Action["type"];
@@ -107,6 +108,15 @@ export function EditorSheet({ target }: { target: EditTarget }) {
     setAppPickerOpen(false);
   };
 
+  const pickPreset = (preset: MediaPreset) => {
+    setProgram(preset.command[0] ?? "");
+    setArgs(preset.command.slice(1).join("\n"));
+    setIcon(preset.icon);
+    setColor(preset.color);
+    setStateSel(preset.state ?? "");
+    if (!label.trim()) setLabel(preset.label);
+  };
+
   const save = () => {
     if (!builtAction) return;
     const button: Button = {
@@ -192,6 +202,7 @@ export function EditorSheet({ target }: { target: EditTarget }) {
               <Icon icon="mdi:apps" style={{ fontSize: "1.2rem" }} />
               Escolher app instalado
             </button>
+            <MediaPresets onPick={pickPreset} />
             <div>
               <label className={labelClass}>Programa</label>
               <input
