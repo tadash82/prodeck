@@ -91,7 +91,12 @@ def test_read_state_unknown_provider_is_false():
 
 def test_watcher_snapshot_and_push(tmp_path, monkeypatch):
     fake_value = {"v": False}
-    monkeypatch.setitem(state_module.PROVIDERS, "mic_muted", lambda: fake_value["v"])
+
+    class FakePlatform:
+        def is_muted(self, kind):
+            return fake_value["v"]
+
+    monkeypatch.setattr(state_module, "current", lambda: FakePlatform())
 
     sent = []
 
@@ -120,7 +125,11 @@ def test_watcher_snapshot_and_push(tmp_path, monkeypatch):
 
 
 def test_deck_get_sends_state_snapshot(tmp_path, monkeypatch):
-    monkeypatch.setitem(state_module.PROVIDERS, "mic_muted", lambda: True)
+    class FakePlatform:
+        def is_muted(self, kind):
+            return True
+
+    monkeypatch.setattr(state_module, "current", lambda: FakePlatform())
     client, store = build_client(tmp_path, [])
     config = store.load_config()
     config.profiles[0].pages[0].buttons[0].state = "mic_muted"

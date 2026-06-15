@@ -8,53 +8,20 @@ todos os dispositivos como `deck.layout`.
 """
 
 import asyncio
-import shutil
-import subprocess
-from collections.abc import Callable
 
 from loguru import logger
 
 from .models import DeckLayoutMessage, StateUpdateMessage, StateUpdatePayload
-from .window import active_window, match_profile
+from .platform import current
+from .window import match_profile
 
-
-def _muted(kind: str) -> bool:
-    """kind: "source" (microfone) ou "sink" (áudio de saída).
-
-    Tenta wpctl (PipeWire, padrão no Ubuntu atual) e cai para pactl (PulseAudio).
-    """
-    if shutil.which("wpctl"):
-        target = "@DEFAULT_AUDIO_SOURCE@" if kind == "source" else "@DEFAULT_AUDIO_SINK@"
-        out = subprocess.run(
-            ["wpctl", "get-volume", target], capture_output=True, text=True, timeout=2
-        )
-        return "[MUTED]" in out.stdout
-    if shutil.which("pactl"):
-        target = "@DEFAULT_SOURCE@" if kind == "source" else "@DEFAULT_SINK@"
-        out = subprocess.run(
-            ["pactl", f"get-{kind}-mute", target],
-            capture_output=True,
-            text=True,
-            timeout=2,
-        )
-        return "yes" in out.stdout.lower() or "sim" in out.stdout.lower()
-    return False
-
-
-PROVIDERS: dict[str, Callable[[], bool]] = {
-    "mic_muted": lambda: _muted("source"),
-    "audio_muted": lambda: _muted("sink"),
-}
+# provider do botão → "lado" do áudio que o SO consulta
+_STATE_KIND = {"mic_muted": "source", "audio_muted": "sink"}
 
 
 def read_state(provider: str) -> bool:
-    fn = PROVIDERS.get(provider)
-    if fn is None:
-        return False
-    try:
-        return fn()
-    except Exception:
-        return False
+    kind = _STATE_KIND.get(provider)
+    return current().is_muted(kind) if kind else False
 
 
 class StateWatcher:
@@ -106,7 +73,7 @@ class StateWatcher:
         config = self.store.load_config()
         if not config.auto_profile:
             return
-        window = active_window()
+        window = current().active_window()
         if window is None or window == self._last_window:
             return
         self._last_window = window

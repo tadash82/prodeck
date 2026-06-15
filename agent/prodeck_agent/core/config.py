@@ -15,7 +15,6 @@ from .models import (
     DeckConfig,
     DevicesFile,
     Grid,
-    HotkeyAction,
     OpenAppAction,
     OpenPathAction,
     OpenUrlAction,
@@ -23,7 +22,7 @@ from .models import (
     Position,
     Profile,
 )
-from .system import lock_command
+from .platform import current
 
 DEFAULT_DIR = "~/.config/prodeck"
 
@@ -70,30 +69,9 @@ def default_config() -> DeckConfig:
     add("Downloads", "mdi:folder-download", "#f59e0b", OpenPathAction(path="~/Downloads"))
     add("Home", "mdi:folder-home", "#8b5cf6", OpenPathAction(path="~"))
     add("GitHub", "mdi:github", "#64748b", OpenUrlAction(url="https://github.com"))
-    add("Terminal", "mdi:console", "#22c55e", HotkeyAction(keys=["ctrl", "alt", "t"]))
-    # bloquear por comando (loginctl/xdg-screensaver) — o atalho global super+l
-    # não dispara via injeção do pynput; cai pro hotkey só se nada for detectado
-    lock = lock_command()
-    add(
-        "Bloquear",
-        "mdi:lock",
-        "#ef4444",
-        OpenAppAction(command=lock) if lock else HotkeyAction(keys=["super", "l"]),
-    )
-    if shutil.which("wpctl"):
-        mute_cmd = ["wpctl", "set-mute", "@DEFAULT_AUDIO_SOURCE@", "toggle"]
-    elif shutil.which("pactl"):
-        mute_cmd = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"]
-    else:
-        mute_cmd = None
-    if mute_cmd:
-        add(
-            "Mute Mic",
-            "mdi:microphone-off",
-            "#ec4899",
-            OpenAppAction(command=mute_cmd),
-            state="mic_muted",
-        )
+    # botões específicos do SO (terminal, bloquear, mutar mic) vêm do provider
+    for spec in current().starter_buttons():
+        add(spec["label"], spec["icon"], spec["color"], spec["action"], spec.get("state"))
 
     return DeckConfig(
         version=CONFIG_VERSION,

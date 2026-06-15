@@ -20,11 +20,9 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
-from ..core.apps import list_apps
-from ..core.audio import audio_presets
 from ..core.config import ConfigStore
+from ..core.platform import current as current_platform
 from ..core.plugins import load_plugins, plugins_metadata
-from ..core.system import system_presets
 from ..core.engine import ActionEngine
 from ..core.net import all_lan_ips
 from ..core.pairing import Pairing
@@ -168,7 +166,7 @@ def create_app(
         if not secrets.compare_digest(token, store.pair_token()):
             raise HTTPException(status_code=401)
         if not getattr(app.state, "apps_cache", None):
-            app.state.apps_cache = await asyncio.to_thread(list_apps)
+            app.state.apps_cache = await asyncio.to_thread(current_platform().installed_apps)
         return JSONResponse(app.state.apps_cache)
 
     @app.get("/presets")
@@ -176,7 +174,7 @@ def create_app(
         """Atalhos prontos (mídia + sistema) já com o comando certo da máquina."""
         if not secrets.compare_digest(token, store.pair_token()):
             raise HTTPException(status_code=401)
-        return JSONResponse(audio_presets() + system_presets())
+        return JSONResponse(current_platform().presets())
 
     @app.get("/plugins")
     async def plugins_list(token: str = "") -> JSONResponse:

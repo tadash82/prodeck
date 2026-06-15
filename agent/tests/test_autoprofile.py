@@ -21,6 +21,20 @@ class FakeConnections:
         self.sent.append(message)
 
 
+class FakePlatform:
+    """Provider falso: fixa a janela ativa para o teste do perfil automático."""
+
+    def __init__(self, window) -> None:
+        self._window = window
+
+    def active_window(self):
+        return self._window
+
+
+def _patch_window(monkeypatch, window) -> None:
+    monkeypatch.setattr(state_mod, "current", lambda: FakePlatform(window))
+
+
 def _config() -> DeckConfig:
     return DeckConfig(
         active_profile="geral",
@@ -46,7 +60,7 @@ def test_watcher_switches_profile_on_matching_window(tmp_path, monkeypatch):
     conns = FakeConnections()
     watcher = StateWatcher(store, conns)
 
-    monkeypatch.setattr(state_mod, "active_window", lambda: ("Code", "projeto"))
+    _patch_window(monkeypatch, ("Code", "projeto"))
     asyncio.run(watcher.check_active_window())
 
     assert store.load_config().active_profile == "dev"
@@ -60,7 +74,7 @@ def test_watcher_ignores_when_no_rule_matches(tmp_path, monkeypatch):
     conns = FakeConnections()
     watcher = StateWatcher(store, conns)
 
-    monkeypatch.setattr(state_mod, "active_window", lambda: ("firefox", "github"))
+    _patch_window(monkeypatch, ("firefox", "github"))
     asyncio.run(watcher.check_active_window())
 
     assert store.load_config().active_profile == "geral"
@@ -72,7 +86,7 @@ def test_watcher_does_not_refire_same_window(tmp_path, monkeypatch):
     store.save_config(_config())
     conns = FakeConnections()
     watcher = StateWatcher(store, conns)
-    monkeypatch.setattr(state_mod, "active_window", lambda: ("Code", "x"))
+    _patch_window(monkeypatch, ("Code", "x"))
 
     asyncio.run(watcher.check_active_window())
     asyncio.run(watcher.check_active_window())  # mesma janela: não repete

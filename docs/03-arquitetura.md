@@ -65,11 +65,15 @@ ProDeck/
 │       │   ├── state.py            # StateWatcher: providers wpctl/pactl + sync do arquivo
 │       │   ├── config.py           # ConfigStore: escrita atômica, backup, migração, default
 │       │   ├── pairing.py          # token, devices.json, notificação de pareamento
-│       │   ├── apps.py             # lista apps instalados (.desktop) + ícones, p/ o seletor do editor
-│       │   ├── audio.py            # atalhos de mídia (wpctl/pactl) detectados
-│       │   ├── system.py           # comandos de sistema (bloquear/print) detectados
+│       │   ├── platform/           # abstração por SO (presets, apps, janela, mute, botões iniciais)
+│       │   │   ├── base.py         #   interface Platform + current() (escolhe por sys.platform)
+│       │   │   ├── linux.py        #   provider Linux (compõe apps/audio/system/window)
+│       │   │   └── windows.py      #   provider Windows (best-effort, a validar)
+│       │   ├── apps.py             # [linux] apps instalados (.desktop) + ícones
+│       │   ├── audio.py            # [linux] atalhos de mídia (wpctl/pactl)
+│       │   ├── system.py           # [linux] comandos de sistema (bloquear/print)
+│       │   ├── window.py           # [linux] janela ativa (Xlib) + match de regras (puro)
 │       │   ├── plugins.py          # descoberta de plugins (entry points prodeck.actions)
-│       │   ├── window.py           # janela ativa (Xlib) + match de regras p/ perfil automático
 │       │   ├── tls.py              # CA + certificado local (cryptography), SAN p/ todos os IPs
 │       │   └── net.py              # IPs de todas as interfaces
 │       ├── plugins/                # plugins que acompanham o agente (ex.: notify)
@@ -92,6 +96,19 @@ ProDeck/
 > O plano original previa `core/input/` com backends de teclado por plataforma;
 > como o desenvolvimento está em X11, o pynput atende direto e a abstração só
 > nasce quando o suporte a Wayland for implementado (YAGNI consciente).
+
+### Abstração por SO (`core/platform/`)
+
+Tudo que difere entre sistemas operacionais fica atrás de **uma interface**
+(`Platform`): atalhos prontos (`presets`), apps instalados (`installed_apps`),
+janela ativa (`active_window`), estado de mute (`is_muted`) e botões iniciais
+(`starter_buttons`). Os consumidores — endpoints `/presets` e `/apps`, o
+`StateWatcher` e o `default_config` — chamam `platform.current()`, que devolve o
+provider do SO. **Linux** é completo (X11/PipeWire/XDG, compondo
+`apps`/`audio`/`system`/`window`); **Windows** é best-effort e ainda precisa de
+validação numa máquina real. Suportar um SO novo = um provider novo, sem mexer no
+core (ADR 16). O que é cross-platform de fato (`open_path`, `open_url`, `hotkey`,
+`text`, servidor, config, TLS) **não** passa pela camada.
 
 ## Modelo de dados
 
@@ -289,3 +306,4 @@ agente. O agente já acompanha um exemplo (`prodeck_agent/plugins/notify.py`).
 | 13 | Atalhos globais do desktop (bloquear, terminal, mídia) por **comando direto detectado**, não por `hotkey` | A injeção do pynput não dispara o grab global do compositor (só atalhos do app em foco); comando é determinístico. Detecção no agente (`audio.py`/`system.py`), exposta em `/presets` | Backend de input ganhar suporte a `ydotool`/portal |
 | 14 | Plugins por **um único tipo de ação `plugin` genérico** (`{name, params}`), não estendendo a união Pydantic em runtime | Mantém o protocolo fechado e os tipos TS estáveis (gerados em build); o plugin valida os próprios `params` e descreve seus campos via `/plugins` | Precisar de validação forte por plugin no core |
 | 15 | Perfil automático por **polling da janela ativa (Xlib) no loop do watcher**, só na mudança de janela | Reusa o loop de 2 s e o broadcast; Xlib já vem com o pynput (sem dependência nova); só agir na mudança evita brigar com a troca manual | Suporte a Wayland (sem `_NET_ACTIVE_WINDOW`) → portal/compositor |
+| 16 | **Abstração por SO** (`core/platform/`) por trás de uma interface, providers por plataforma | Isola o que muda entre SOs (presets, apps, janela, mute, botões iniciais); suportar Windows vira "escrever um provider", sem tocar no core | A interface ficar grande demais (sinal de que algo cross-platform vazou pra cá) |
