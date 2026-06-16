@@ -10,7 +10,7 @@ import subprocess
 from ..apps import list_apps
 from ..audio import audio_presets
 from ..system import lock_command, system_presets
-from ..window import active_window
+from ..window import active_window, focus_window
 
 _TERMINALS = (
     "gnome-terminal",
@@ -100,6 +100,9 @@ class LinuxPlatform:
 
     def active_window(self) -> tuple[str, str] | None:
         return active_window()
+
+    def focus_window(self, match: str) -> bool:
+        return focus_window(match)
 
     def is_muted(self, kind: str) -> bool:
         try:

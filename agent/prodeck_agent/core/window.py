@@ -22,6 +22,7 @@ def _connect() -> None:
     _display = display.Display()
     _atoms = {
         "active": _display.intern_atom("_NET_ACTIVE_WINDOW"),
+        "client_list": _display.intern_atom("_NET_CLIENT_LIST"),
         "name": _display.intern_atom("_NET_WM_NAME"),
         "utf8": _display.intern_atom("UTF8_STRING"),
     }
@@ -55,6 +56,51 @@ def active_window() -> tuple[str, str] | None:
         logger.debug("janela ativa indisponível: {}", exc)
         _display = None  # força reconexão na próxima chamada
         return None
+
+
+def focus_window(match: str) -> bool:
+    """Traz para frente (desminimiza + foca) a primeira janela já aberta cuja
+    classe ou título contenha `match` (case-insensitive).
+
+    Devolve True se achou e ativou; False se não há janela correspondente ou a
+    sessão não expõe X (Wayland/headless). Usa o protocolo EWMH `_NET_ACTIVE_
+    WINDOW` (fonte=pager) que o Mutter/GNOME honra mesmo para janela minimizada.
+    """
+    if not os.environ.get("DISPLAY") or not match.strip():
+        return False
+    needle = match.strip().lower()
+    global _display
+    try:
+        from Xlib import X, protocol
+
+        if _display is None:
+            _connect()
+        root = _display.screen().root
+        prop = root.get_full_property(_atoms["client_list"], X.AnyPropertyType)
+        if not prop or not prop.value:
+            return False
+        for wid in prop.value:
+            win = _display.create_resource_object("window", wid)
+            wm_class = win.get_wm_class()  # (instância, classe)
+            klass = " ".join(c for c in (wm_class or ()) if c)
+            name = win.get_full_property(_atoms["name"], _atoms["utf8"])
+            title = name.value.decode("utf-8", "replace") if name else (win.get_wm_name() or "")
+            if needle not in f"{klass} {title}".lower():
+                continue
+            event = protocol.event.ClientMessage(
+                window=win,
+                client_type=_atoms["active"],
+                data=(32, [2, X.CurrentTime, 0, 0, 0]),  # fonte=2 (pager)
+            )
+            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+            root.send_event(event, event_mask=mask)
+            _display.flush()
+            return True
+        return False
+    except Exception as exc:
+        logger.debug("focar janela falhou: {}", exc)
+        _display = None  # força reconexão na próxima chamada
+        return False
 
 
 def match_profile(rules: list[AutoProfileRule], klass: str, title: str) -> str | None:

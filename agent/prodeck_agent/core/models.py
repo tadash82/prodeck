@@ -24,6 +24,9 @@ class StrictModel(BaseModel):
 class OpenAppAction(StrictModel):
     type: Literal["open_app"] = "open_app"
     command: list[str] = Field(min_length=1)
+    # se já houver uma janela do app aberta (mesmo minimizada), traz ela para
+    # frente em vez de lançar outra instância (X11/EWMH; no-op em Wayland)
+    focus_if_open: bool = False
 
 
 class OpenPathAction(StrictModel):

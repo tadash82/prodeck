@@ -52,6 +52,10 @@ export function EditorSheet({ target }: { target: EditTarget }) {
   const [actionType, setActionType] = useState<ActionType>(action?.type ?? "open_app");
   const [program, setProgram] = useState(initCommand[0] ?? "");
   const [args, setArgs] = useState(initCommand.slice(1).join("\n"));
+  // botão novo já vem com "abrir ou focar" ligado; ao editar, respeita o salvo
+  const [focusIfOpen, setFocusIfOpen] = useState(
+    action?.type === "open_app" ? (action.focus_if_open ?? false) : true,
+  );
   const [appPickerOpen, setAppPickerOpen] = useState(false);
   const [path, setPath] = useState(action?.type === "open_path" ? action.path : "");
   const [url, setUrl] = useState(action?.type === "open_url" ? action.url : "");
@@ -78,7 +82,11 @@ export function EditorSheet({ target }: { target: EditTarget }) {
           .split("\n")
           .map((s) => s.trim())
           .filter(Boolean);
-        return { type: "open_app", command: [prog, ...extra] as [string, ...string[]] };
+        return {
+          type: "open_app",
+          command: [prog, ...extra] as [string, ...string[]],
+          focus_if_open: focusIfOpen,
+        };
       }
       case "open_path": {
         const p = path.trim();
@@ -246,6 +254,21 @@ export function EditorSheet({ target }: { target: EditTarget }) {
                 placeholder="/home/voce/Projetos/MeuApp"
               />
             </div>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-slate-800/60 px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={focusIfOpen}
+                onChange={(e) => setFocusIfOpen(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+              />
+              <span className="text-sm text-slate-200">
+                Trazer pra frente se já estiver aberto
+                <span className="mt-0.5 block text-[11px] font-normal text-slate-500">
+                  Restaura e foca a janela existente (mesmo minimizada) em vez de abrir
+                  outra. Funciona em X11.
+                </span>
+              </span>
+            </label>
           </div>
         )}
         {actionType === "open_path" && (

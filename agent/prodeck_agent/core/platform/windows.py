@@ -76,6 +76,9 @@ class WindowsPlatform:
         except Exception:
             return None
 
+    def focus_window(self, match: str) -> bool:
+        return False  # TODO(windows): EnumWindows + SetForegroundWindow via ctypes
+
     def is_muted(self, kind: str) -> bool:
         return False  # TODO(windows): CoreAudio (sem dependência nova) ou nircmd
 

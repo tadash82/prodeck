@@ -30,6 +30,7 @@ export type Type4 = "open_app";
  * @minItems 1
  */
 export type Command = [string, ...string[]];
+export type FocusIfOpen = boolean;
 export type Type5 = "open_path";
 export type Path = string;
 export type Type6 = "open_url";
@@ -188,6 +189,7 @@ export interface ActionTestPayload {
 export interface OpenAppAction {
   type?: Type4;
   command: Command;
+  focus_if_open?: FocusIfOpen;
 }
 export interface OpenPathAction {
   type?: Type5;

@@ -28,6 +28,11 @@ class Platform(Protocol):
         """`(classe, título)` da janela em foco, ou `None` se indisponível."""
         ...
 
+    def focus_window(self, match: str) -> bool:
+        """Traz para frente uma janela já aberta que case com `match`
+        (classe/título). True se ativou; False se não há (ou SO sem suporte)."""
+        ...
+
     def is_muted(self, kind: str) -> bool:
         """`kind`: `"source"` (microfone) ou `"sink"` (saída de áudio)."""
         ...
