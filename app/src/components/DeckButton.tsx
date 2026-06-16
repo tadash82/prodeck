@@ -1,4 +1,4 @@
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Icon } from "@iconify/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -21,9 +21,10 @@ type DeckButtonProps = {
   button: Button;
   profileId: string;
   pageId: string;
+  cell: number;
 };
 
-export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
+export function DeckButton({ button, profileId, pageId, cell }: DeckButtonProps) {
   const trigger = useDeck((s) => s.trigger);
   const editMode = useDeck((s) => s.editMode);
   const setEditMode = useDeck((s) => s.setEditMode);
@@ -50,16 +51,33 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
     id: button.id,
     disabled: !editMode,
   });
+  // a própria célula também é alvo de drop: arrastar um botão sobre outro troca
+  // as posições (moveButton). Sem isto, só dava para soltar em célula vazia.
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `cell-${button.position.col}-${button.position.row}`,
+    disabled: !editMode,
+  });
+  const setRefs = (node: HTMLElement | null) => {
+    setNodeRef(node);
+    setDropRef(node);
+  };
+
+  // ícone proporcional à célula (cell px) — fixo ficava minúsculo em telas grandes
+  const iconSize = button.widget
+    ? `${Math.round(cell * 0.24)}px`
+    : `${Math.round(cell * 0.42)}px`;
 
   const color = button.color ?? FALLBACK_COLOR;
   const ring =
-    flash !== null
-      ? flash.status === "ok"
-        ? ", 0 0 0 3px #22c55e"
-        : ", 0 0 0 3px #ef4444"
-      : active
-        ? ", 0 0 0 2.5px #ffffffe6"
-        : "";
+    isOver && !isDragging
+      ? ", 0 0 0 3px #3b82f6"
+      : flash !== null
+        ? flash.status === "ok"
+          ? ", 0 0 0 3px #22c55e"
+          : ", 0 0 0 3px #ef4444"
+        : active
+          ? ", 0 0 0 2.5px #ffffffe6"
+          : "";
 
   const onClick = () => {
     if (longPress.firedRecently() || Date.now() - lastDragEndAt < 200) return;
@@ -69,7 +87,7 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
 
   return (
     <motion.button
-      ref={setNodeRef}
+      ref={setRefs}
       whileTap={isDragging ? undefined : { scale: 0.92 }}
       animate={
         flash?.status === "error"
@@ -97,7 +115,7 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
     >
       {button.widget ? (
         <>
-          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="1.4rem" />
+          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size={iconSize} />
           <span
             className={`font-bold leading-none tabular-nums ${
               (widgetValue ?? "").length <= 6 ? "text-xl" : "text-sm"
@@ -111,10 +129,15 @@ export function DeckButton({ button, profileId, pageId }: DeckButtonProps) {
         </>
       ) : (
         <>
-          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size="2.1rem" />
-          <span className="px-1 text-center text-[11px] leading-tight font-semibold text-white/90">
-            {button.label}
-          </span>
+          <ButtonIcon icon={button.icon ?? FALLBACK_ICON} size={iconSize} />
+          {button.label && (
+            <span
+              className="px-1 text-center leading-tight font-semibold text-white/90"
+              style={{ fontSize: `${Math.max(11, Math.round(cell * 0.13))}px` }}
+            >
+              {button.label}
+            </span>
+          )}
         </>
       )}
       {editMode && (

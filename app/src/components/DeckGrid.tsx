@@ -73,6 +73,7 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
               button={button}
               profileId={profileId}
               pageId={page.id}
+              cell={cell}
             />
           );
         }
@@ -97,6 +98,7 @@ export function DeckGrid({ page, profileId }: DeckGridProps) {
             button={button}
             profileId={profileId}
             pageId={page.id}
+            cell={cell}
           />
         ))}
     </div>
