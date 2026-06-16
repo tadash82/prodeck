@@ -175,5 +175,7 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Binário único Linux (PyInstaller) — `scripts/build-binary.sh` — v1.2, 2026-06-15
   - [x] Botões-widget ao vivo (CPU, RAM, disco, relógio, data) — v1.2, 2026-06-15
   - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC — v1.2, 2026-06-15
+  - [x] Reposicionar botões por arraste e ícone proporcional à célula — v1.3, 2026-06-16
+  - [x] `open_app` "abrir ou focar": restaura janela já aberta (X11/EWMH) — v1.3, 2026-06-16
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda
   - [ ] Multi-PC: um celular controla várias máquinas (seletor de agente) — sob demanda
