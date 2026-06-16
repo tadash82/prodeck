@@ -2,9 +2,11 @@
 
 import argparse
 import asyncio
+import glob
 import os
 import signal
 import socket
+import subprocess
 import threading
 import time
 import webbrowser
@@ -88,6 +90,39 @@ def _serve_with_tls(
     asyncio.run(serve())
 
 
+def _ensure_display() -> None:
+    """Garante DISPLAY/XAUTHORITY no ambiente do processo.
+
+    Como serviço systemd de usuário, o agente pode subir no boot *antes* de a
+    sessão gráfica exportar o DISPLAY ao manager — aí pynput (hotkey/text) e o
+    Xlib (auto-perfil) quebram com "Bad display name". Aqui puxamos os valores
+    que o systemd já conhece (`show-environment`); fallback: o socket ativo em
+    /tmp/.X11-unix. Não sobrescreve o que já estiver setado (uso interativo).
+    """
+    if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+        return
+    try:
+        out = subprocess.run(
+            ["systemctl", "--user", "show-environment"],
+            capture_output=True,
+            text=True,
+            timeout=3,
+        ).stdout
+        for line in out.splitlines():
+            key, _, val = line.partition("=")
+            if key in ("DISPLAY", "XAUTHORITY") and val and key not in os.environ:
+                os.environ[key] = val
+    except Exception:
+        pass
+    if os.environ.get("DISPLAY"):
+        return
+    for sock in sorted(glob.glob("/tmp/.X11-unix/X*")):
+        num = sock.rsplit("X", 1)[-1]
+        if num.isdigit():
+            os.environ["DISPLAY"] = f":{num}"
+            break
+
+
 def _should_open_browser(no_open: bool) -> bool:
     """Abre o navegador só no uso interativo: nunca sob systemd nem headless."""
     if no_open or os.environ.get("INVOCATION_ID"):
@@ -146,6 +181,8 @@ def main() -> None:
     if args.uninstall_service:
         service.uninstall()
         return
+
+    _ensure_display()
 
     store = ConfigStore()
     if args.reset_pairing:

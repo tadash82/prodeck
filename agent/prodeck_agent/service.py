@@ -11,6 +11,7 @@ UNIT_PATH = Path.home() / ".config/systemd/user/prodeck.service"
 UNIT_TEMPLATE = """[Unit]
 Description=ProDeck Agent — deck de produtividade no celular
 After=graphical-session.target
+PartOf=graphical-session.target
 
 [Service]
 ExecStart="{python}" -m prodeck_agent --no-tray{tls} --port {port}
@@ -18,7 +19,7 @@ Restart=on-failure
 RestartSec=3
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target
 """
 
 
