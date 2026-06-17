@@ -183,7 +183,7 @@ Regras:
 
 - **Ações são uma união discriminada** pelo campo `type` (Pydantic `Discriminator`) — tipos atuais: `open_app`, `open_path`, `open_url`, `hotkey`, `text`, `shell`, `macro` (passos das ações básicas + `delay`) e `plugin` (ação de pacote externo: `{ name, params }`). Adicionar um tipo novo não quebra os existentes.
 - `command` é **lista de argumentos** (nunca string única) → execução sem shell por padrão, sem injeção. A ação `shell` é a exceção explícita, atrás de `allow_shell` (padrão `false`) e sempre logada.
-- Botões podem ter `"state": "mic_muted" | "audio_muted"` — o agente avalia o provider (wpctl/pactl) e envia `state.update` quando o fato muda no PC.
+- Botões podem ter `"state": "mic_muted" | "audio_muted" | "discord_muted" | "discord_deaf"` — o agente avalia o provider e envia `state.update` quando o fato muda no PC. Os de áudio vêm de wpctl/pactl; os de Discord vêm de um **plugin externo opcional** (ver "Plugins"), resolvidos por import opcional em `state.py` (degrada para apagado se o plugin não estiver instalado).
 - Botões podem ter `"widget": "clock"|"date"|"datetime"|"cpu"|"ram"|"disk"` — o botão **exibe o valor ao vivo** (`widget.update`, polling de 2 s). `action` é **opcional**: um botão pode ser só-widget (sem ação ao tocar) ou widget + ação. Os valores de sistema (cpu/ram) passam pela camada de plataforma; relógio/data são da stdlib.
 - `auto_profile` (opcional, padrão `[]`) é uma lista de regras `{ match, profile }`: quando a **janela em foco** no PC casa (`match` é substring na classe/título), o agente ativa aquele perfil e propaga `deck.layout` com `id: "auto-profile"`. Só age na *mudança* de janela (não briga com a troca manual) e só em X11. Sem regras, o recurso fica inerte.
 - `version` no topo + função de migração simples permitem evoluir o formato sem quebrar configs antigas; toda escrita é atômica e gera `.bak` da versão anterior.
@@ -288,7 +288,18 @@ O protocolo **não muda**: existe um único tipo de ação `plugin` com `{ name,
 params }` (ver ADR 14). O agente descobre os plugins (`load_plugins()`), o
 engine despacha pelo `name`, e o editor lista os plugins e renderiza seus campos
 via `GET /plugins`. Um plugin quebrado é ignorado com aviso, sem derrubar o
-agente. O agente já acompanha um exemplo (`prodeck_agent/plugins/notify.py`).
+agente. O agente já acompanha um exemplo interno (`prodeck_agent/plugins/notify.py`).
+
+Além do exemplo interno, o monorepo traz um **plugin externo de verdade** em
+`plugins/prodeck-discord/` (pacote próprio, instalado no mesmo venv via grupo uv
+`plugins`): mutar/ensurdecer no **Discord** pelo RPC local (socket IPC), com
+conexão **persistente** (o Discord reverte alterações de voz via RPC ao
+desconectar). Ele ilustra dois pontos além do `run`: (1) registra **duas ações**
+(`discord_mute`, `discord_deaf`) por dois entry points, aparecendo prontas no
+editor sem campos; (2) **alimenta um indicador de estado** — expõe
+`voice_state()`, que o core consome por import opcional em `state.py` para
+acender o botão (`discord_muted`/`discord_deaf`). Setup em
+`plugins/prodeck-discord/README.md`. Ver ADR 18.
 
 ## Decisões registradas (mini-ADRs)
 
@@ -311,3 +322,4 @@ agente. O agente já acompanha um exemplo (`prodeck_agent/plugins/notify.py`).
 | 15 | Perfil automático por **polling da janela ativa (Xlib) no loop do watcher**, só na mudança de janela | Reusa o loop de 2 s e o broadcast; Xlib já vem com o pynput (sem dependência nova); só agir na mudança evita brigar com a troca manual | Suporte a Wayland (sem `_NET_ACTIVE_WINDOW`) → portal/compositor |
 | 16 | **Abstração por SO** (`core/platform/`) por trás de uma interface, providers por plataforma | Isola o que muda entre SOs (presets, apps, janela, mute, botões iniciais); suportar Windows vira "escrever um provider", sem tocar no core | A interface ficar grande demais (sinal de que algo cross-platform vazou pra cá) |
 | 17 | Deploy recomendado: **serviço systemd de usuário** instalado do PyPI, não rodar de um shell empacotado (snap) | O agente lança apps via `subprocess` herdando seu ambiente; um shell de snap (terminal do VS Code, etc.) injeta `LD_LIBRARY_PATH`/`GTK_PATH` de `/snap` e quebra os apps lançados (glibc errada). `systemd --user` dá ambiente de sessão limpo (DISPLAY/D-Bus) + autostart; `uv tool install` em `~/.local` desacopla do checkout/drive | Empacotar como Flatpak/AppImage com ambiente próprio controlado |
+| 18 | Estado ao vivo de **plugin externo** exposto ao core por **import opcional** (`state.py` tenta `from prodeck_discord import voice_state`) | Deixa o botão acender refletindo um fato que só o plugin conhece (mute do Discord) sem o core depender do pacote — ausente, degrada para apagado; o único acoplamento fica isolado num provider | Vários plugins quererem prover estado → mecanismo genérico de "state providers de plugin" |

@@ -660,6 +660,9 @@ dev = [
     { name = "pytest" },
     { name = "websockets" },
 ]
+plugins = [
+    { name = "prodeck-discord" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -678,6 +681,21 @@ dev = [
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "websockets", specifier = ">=16.0" },
 ]
+plugins = [{ name = "prodeck-discord", editable = "../plugins/prodeck-discord" }]
+
+[[package]]
+name = "prodeck-discord"
+version = "0.1.0"
+source = { editable = "../plugins/prodeck-discord" }
+dependencies = [
+    { name = "loguru" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "loguru", specifier = ">=0.7" }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "pycparser"

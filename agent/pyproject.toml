@@ -61,3 +61,13 @@ dev = [
     "pytest>=9.0.3",
     "websockets>=16.0",
 ]
+# Plugins de primeira-parte do monorepo (ações extras via entry point
+# "prodeck.actions"). Opcionais, mas incluídos nos grupos padrão para que o
+# `uv sync` os mantenha no mesmo .venv que o serviço usa.
+plugins = ["prodeck-discord"]
+
+[tool.uv]
+default-groups = ["dev", "plugins"]
+
+[tool.uv.sources]
+prodeck-discord = { path = "../plugins/prodeck-discord", editable = true }

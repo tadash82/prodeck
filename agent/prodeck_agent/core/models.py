@@ -110,7 +110,7 @@ class Grid(StrictModel):
     rows: int = Field(default=4, ge=1, le=10)
 
 
-StateProvider = Literal["mic_muted", "audio_muted"]
+StateProvider = Literal["mic_muted", "audio_muted", "discord_muted", "discord_deaf"]
 WidgetKind = Literal["clock", "date", "datetime", "cpu", "ram", "disk"]
 
 

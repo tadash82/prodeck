@@ -89,7 +89,7 @@ export type Action1 =
       | MacroAction
     )
   | null;
-export type State = ("mic_muted" | "audio_muted") | null;
+export type State = ("mic_muted" | "audio_muted" | "discord_muted" | "discord_deaf") | null;
 export type Widget = ("clock" | "date" | "datetime" | "cpu" | "ram" | "disk") | null;
 export type Buttons = Button[];
 export type Pages = Page[];

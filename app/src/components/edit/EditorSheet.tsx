@@ -382,6 +382,8 @@ export function EditorSheet({ target }: { target: EditTarget }) {
             <option value="">Nenhum</option>
             <option value="mic_muted">Microfone mutado</option>
             <option value="audio_muted">Áudio mutado</option>
+            <option value="discord_muted">Discord — mic mutado</option>
+            <option value="discord_deaf">Discord — ensurdecido</option>
           </select>
           <p className="mt-1 text-[11px] text-slate-500">
             O botão acende quando o estado estiver ativo no PC.

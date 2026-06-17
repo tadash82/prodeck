@@ -27,8 +27,26 @@ _STATE_KIND = {"mic_muted": "source", "audio_muted": "sink"}
 
 
 def read_state(provider: str) -> bool:
+    if provider in ("discord_muted", "discord_deaf"):
+        return _discord_state(provider)
     kind = _STATE_KIND.get(provider)
     return current().is_muted(kind) if kind else False
+
+
+def _discord_state(provider: str) -> bool:
+    """Estado de voz do Discord via plugin externo opcional (prodeck-discord).
+
+    Degrada para 'apagado' se o plugin não estiver instalado — o core não
+    depende dele; o acoplamento é só este import, isolado num provider.
+    """
+    try:
+        from prodeck_discord import voice_state
+    except ImportError:
+        return False
+    state = voice_state()
+    if not state:
+        return False
+    return bool(state.get("mute" if provider == "discord_muted" else "deaf"))
 
 
 class StateWatcher:

@@ -1,0 +1,32 @@
+[project]
+name = "prodeck-discord"
+version = "0.1.0"
+description = "ProDeck × Discord — mutar/ensurdecer via RPC local (plugin de ação)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{ name = "Alberto Tadashi", email = "alberto@wtt.com.br" }]
+keywords = ["prodeck", "discord", "rpc", "plugin", "mute", "deafen"]
+# Sem dependências externas: usa só a stdlib (socket/struct/json/urllib).
+# `loguru` para logar igual ao agente. Importa prodeck_agent.core.plugins em
+# runtime — instale no MESMO venv do agente (o entry point só é descoberto lá).
+dependencies = ["loguru>=0.7"]
+
+# Cada entry point aponta para um ActionPlugin; o agente os descobre via
+# importlib.metadata.entry_points(group="prodeck.actions").
+[project.entry-points."prodeck.actions"]
+discord_mute = "prodeck_discord:mute_plugin"
+discord_deaf = "prodeck_discord:deaf_plugin"
+
+[project.scripts]
+prodeck-discord-auth = "prodeck_discord.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["prodeck_discord"]
+
+[dependency-groups]
+dev = ["pytest>=9.0.3"]

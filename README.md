@@ -118,7 +118,7 @@ plugin = ActionPlugin(
 spotify = "prodeck_spotify:plugin"
 ```
 
-Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos que você declarou. O agente já acompanha um exemplo (`notify`, notificação de desktop). Detalhes em [docs/03 — Plugins](docs/03-arquitetura.md).
+Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos que você declarou. O agente já acompanha um exemplo interno (`notify`, notificação de desktop), e o monorepo traz um plugin **externo** de verdade em [`plugins/prodeck-discord/`](plugins/prodeck-discord/README.md) — mutar/ensurdecer no **Discord** via RPC local, com botão que acende refletindo o estado real. Detalhes em [docs/03 — Plugins](docs/03-arquitetura.md).
 
 ## Solução de problemas
 
@@ -177,5 +177,6 @@ Instalado o pacote, a ação aparece na aba **Plugin** do editor com os campos q
   - [x] Exportar/importar perfis (JSON) — backup e levar para outro PC — v1.2, 2026-06-15
   - [x] Reposicionar botões por arraste e ícone proporcional à célula — v1.3, 2026-06-16
   - [x] `open_app` "abrir ou focar": restaura janela já aberta (X11/EWMH) — v1.3, 2026-06-16
+  - [x] Plugin externo **Discord** (mutar/ensurdecer via RPC local IPC, com indicador de estado) em `plugins/prodeck-discord/` — 2026-06-17
   - [ ] Suporte a Windows (provider best-effort escrito, a validar) e binário Windows — sob demanda
   - [ ] Multi-PC: um celular controla várias máquinas (seletor de agente) — sob demanda
